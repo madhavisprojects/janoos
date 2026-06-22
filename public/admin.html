@@ -1,0 +1,1098 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Admin – Janoos</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+<!-- Admin Login -->
+<div id="adminLoginPage" class="auth-page">
+  <div class="auth-box">
+    <div class="auth-logo">
+      <div style="font-size:2.5rem;">✂️</div>
+      <div class="brand">Janoos</div>
+      <div class="tagline">Admin Panel</div>
+    </div>
+    <div class="auth-title">Admin Login</div>
+    <div class="form-group">
+      <label>Username</label>
+      <input type="text" id="adminUser" placeholder="Enter admin username" />
+    </div>
+    <div class="form-group">
+      <label>Password</label>
+      <input type="password" id="adminPass" placeholder="Enter password" onkeydown="if(event.key==='Enter')adminLogin()" />
+    </div>
+    <button class="btn btn-primary btn-full" onclick="adminLogin()" id="adminLoginBtn">Login to Admin Panel</button>
+  </div>
+</div>
+
+<!-- Admin Dashboard -->
+<div id="adminPanel" style="display:none;" class="admin-layout">
+
+  <!-- Sidebar -->
+  <aside class="admin-sidebar" id="adminSidebar">
+    <div class="sidebar-logo">
+      <div class="brand">✂️ Janoos</div>
+      <div class="role">ADMIN PANEL</div>
+      <div style="font-size:0.78rem;opacity:0.7;margin-top:6px;" id="adminRoleDisplay"></div>
+    </div>
+    <nav>
+      <a href="#" class="active" onclick="showSection('dashboard')" data-sec="dashboard">
+        <span class="nav-icon">📊</span> Dashboard
+      </a>
+      <a href="#" onclick="showSection('users')" data-sec="users">
+        <span class="nav-icon">👥</span> Members
+      </a>
+      <a href="#" onclick="showSection('designers')" data-sec="designers">
+        <span class="nav-icon">🧵</span> Designers
+      </a>
+      <a href="#" onclick="showSection('videos')" data-sec="videos">
+        <span class="nav-icon">🎬</span> Designer Style Videos
+      </a>
+      <a href="#" onclick="showSection('shopvideos')" data-sec="shopvideos">
+        <span class="nav-icon">🛍️</span> Shop Videos
+      </a>
+      <a href="#" onclick="showSection('settings')" data-sec="settings">
+        <span class="nav-icon">⚙️</span> Settings
+      </a>
+    </nav>
+    <div class="sidebar-footer">
+      <button class="btn btn-outline btn-sm btn-full" onclick="adminLogout()">Logout</button>
+    </div>
+  </aside>
+
+  <!-- Main -->
+  <main class="admin-main">
+
+    <!-- ── Dashboard ── -->
+    <div id="sec-dashboard">
+      <div class="admin-topbar">
+        <h1>📊 Dashboard</h1>
+        <button class="btn btn-primary btn-sm" onclick="loadStats()">↺ Refresh</button>
+      </div>
+      <div class="stat-grid" id="statsGrid">
+        <div class="stat-card"><div class="stat-icon">👥</div><div class="stat-value" id="st-total">—</div><div class="stat-label">Total Members</div></div>
+        <div class="stat-card"><div class="stat-icon">✅</div><div class="stat-value" id="st-verified">—</div><div class="stat-label">Verified</div></div>
+        <div class="stat-card"><div class="stat-icon">🕐</div><div class="stat-value" id="st-pending">—</div><div class="stat-label">Pending Payments</div></div>
+        <div class="stat-card"><div class="stat-icon">📦</div><div class="stat-value" id="st-orders">—</div><div class="stat-label">Total Orders</div></div>
+        <div class="stat-card"><div class="stat-icon">🆕</div><div class="stat-value" id="st-newtoday">—</div><div class="stat-label">New Today</div></div>
+        <div class="stat-card"><div class="stat-icon">📅</div><div class="stat-value" id="st-orderstoday">—</div><div class="stat-label">Orders Today</div></div>
+      </div>
+      <div class="card">
+        <h3 style="font-weight:700;color:var(--primary-dark);margin-bottom:14px;">📦 Orders by Status</h3>
+        <div id="orderStatusChart" style="display:flex;flex-wrap:wrap;gap:10px;"></div>
+      </div>
+    </div>
+
+    <!-- ── Designers ── -->
+    <div id="sec-designers" style="display:none;">
+      <div class="admin-topbar">
+        <h1>🧵 Designers</h1>
+        <button class="btn btn-primary btn-sm" onclick="loadDesigners()">↺ Refresh</button>
+      </div>
+
+      <div class="card" style="margin-bottom:20px;">
+        <h3 id="designerFormTitle" style="margin-bottom:14px;font-size:1rem;">Add Designer</h3>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+          <div class="form-group">
+            <label>Name *</label>
+            <input id="dName" placeholder="e.g. Priya Designs"/>
+          </div>
+          <div class="form-group">
+            <label>Mobile</label>
+            <input id="dMobile" placeholder="e.g. 9876543210"/>
+          </div>
+          <div class="form-group">
+            <label>Email *</label>
+            <input id="dEmail" placeholder="designer@example.com"/>
+          </div>
+          <div class="form-group">
+            <label>City</label>
+            <input id="dCity" placeholder="e.g. Hyderabad"/>
+          </div>
+          <div class="form-group" style="grid-column:1/-1;">
+            <label>Address</label>
+            <input id="dAddress" placeholder="e.g. Shop No. 12, Main Road"/>
+          </div>
+          <div class="form-group">
+            <label>Password <span id="dPasswordHint" style="font-size:.78rem;color:#aaa;">*</span></label>
+            <input id="dPassword" type="password" placeholder="Login password"/>
+          </div>
+          <div class="form-group">
+            <label>Status</label>
+            <select id="dStatus"><option value="true">Active</option><option value="false">Inactive</option></select>
+          </div>
+        </div>
+        <div style="display:flex;gap:10px;margin-top:6px;">
+          <button class="btn btn-primary" onclick="submitDesigner()" id="designerSubmitBtn">Add Designer</button>
+          <button class="btn btn-outline" id="cancelDesignerBtn" onclick="cancelDesignerEdit()" style="display:none;">Cancel</button>
+        </div>
+        <p id="designerErr" style="color:#e74c3c;font-size:.82rem;margin-top:8px;"></p>
+      </div>
+
+      <div class="card">
+        <div id="designersTableWrap">
+          <table class="admin-table">
+            <thead><tr><th>Name</th><th>Email</th><th>Mobile</th><th>City</th><th>Status</th><th>Joined</th><th>Actions</th></tr></thead>
+            <tbody id="designersTableBody"></tbody>
+          </table>
+          <p id="designersEmpty" style="text-align:center;color:#aaa;padding:30px;display:none;">No designers added yet.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── Designer Style Videos ── -->
+    <div id="sec-videos" style="display:none;">
+      <div class="admin-topbar">
+        <h1>🎬 Designer Style Videos</h1>
+        <button class="btn btn-primary btn-sm" onclick="loadAdminVideos()">↺ Refresh</button>
+      </div>
+
+      <!-- Add / Edit form -->
+      <div class="card" style="margin-bottom:20px;">
+        <h3 id="videoFormTitle" style="margin-bottom:14px;font-size:1rem;">Add Designer Style Video</h3>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+          <div class="form-group">
+            <label>Title *</label>
+            <input id="vTitle" placeholder="e.g. Elegant Blouse Style"/>
+          </div>
+          <div class="form-group">
+            <label>Gender *</label>
+            <select id="vGender" onchange="populateVCategoryOptions()">
+              <option value="Women">Women</option>
+              <option value="Men">Men</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Category *</label>
+            <select id="vCategory"></select>
+          </div>
+          <div class="form-group">
+            <label>Designer <span style="font-size:.78rem;color:#aaa;">(optional — leave blank for "Admin")</span></label>
+            <select id="vDesigner">
+              <option value="">— Admin (no designer) —</option>
+            </select>
+          </div>
+          <div class="form-group" style="grid-column:1/-1;">
+            <label>Video URL * <span style="font-size:.78rem;color:#aaa;">(YouTube, Instagram Reel, or direct MP4 link)</span></label>
+            <input id="vUrl" placeholder="https://www.youtube.com/watch?v=..."/>
+          </div>
+          <div class="form-group" style="grid-column:1/-1;">
+            <label>Description</label>
+            <input id="vDesc" placeholder="Short description shown to customers"/>
+          </div>
+          <div class="form-group">
+            <label>Status</label>
+            <select id="vStatus"><option value="true">Active</option><option value="false">Inactive</option></select>
+          </div>
+        </div>
+        <div style="display:flex;gap:10px;margin-top:6px;">
+          <button class="btn btn-primary" onclick="submitVideo()" id="videoSubmitBtn">Add Video</button>
+          <button class="btn btn-outline" id="cancelVideoBtn" onclick="cancelVideoEdit()" style="display:none;">Cancel</button>
+        </div>
+        <p id="videoErr" style="color:#e74c3c;font-size:.82rem;margin-top:8px;"></p>
+      </div>
+
+      <!-- Videos table -->
+      <div class="card">
+        <div id="videosTableWrap">
+          <table class="admin-table">
+            <thead><tr><th>Title</th><th>Gender</th><th>Category</th><th>URL</th><th>Description</th><th>Added By</th><th>Status</th><th>Actions</th></tr></thead>
+            <tbody id="videosTableBody"></tbody>
+          </table>
+          <p id="videosEmpty" style="text-align:center;color:#aaa;padding:30px;display:none;">No videos added yet.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── Shop Videos ── -->
+    <div id="sec-shopvideos" style="display:none;">
+      <div class="admin-topbar">
+        <h1>🛍️ Shop Videos</h1>
+        <button class="btn btn-primary btn-sm" onclick="loadShopVideos()">↺ Refresh</button>
+      </div>
+      <div class="card" style="margin-bottom:20px;">
+        <h3 id="svFormTitle" style="margin-bottom:14px;font-size:1rem;">Add Shop Video</h3>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+          <div class="form-group">
+            <label>Title *</label>
+            <input id="svTitle" placeholder="e.g. Bridal Blouse Collection"/>
+          </div>
+          <div class="form-group">
+            <label>Status</label>
+            <select id="svStatus"><option value="true">Active</option><option value="false">Inactive</option></select>
+          </div>
+          <div class="form-group" style="grid-column:1/-1;">
+            <label>Video URL * <span style="font-size:.78rem;color:#aaa;">(YouTube, Instagram Reel, or direct MP4 link)</span></label>
+            <input id="svUrl" placeholder="https://www.youtube.com/watch?v=..."/>
+          </div>
+          <div class="form-group" style="grid-column:1/-1;">
+            <label>Shop WhatsApp No.</label>
+            <input id="svWhatsapp" placeholder="e.g. 919876543210"/>
+          </div>
+          <div class="form-group" style="grid-column:1/-1;">
+            <label>Description</label>
+            <textarea id="svDescription" rows="2" placeholder="Short description of this shop video"></textarea>
+          </div>
+        </div>
+        <div style="display:flex;gap:10px;margin-top:6px;">
+          <button class="btn btn-primary" onclick="submitShopVideo()" id="svSubmitBtn">Add Video</button>
+          <button class="btn btn-outline" id="cancelSvBtn" onclick="cancelSvEdit()" style="display:none;">Cancel</button>
+        </div>
+        <p id="svErr" style="color:#e74c3c;font-size:.82rem;margin-top:8px;"></p>
+      </div>
+      <div class="card">
+        <div id="svTableWrap">
+          <table class="admin-table">
+            <thead><tr><th>Title</th><th>Video URL</th><th>WhatsApp No.</th><th>Description</th><th>Status</th><th>Actions</th></tr></thead>
+            <tbody id="svTableBody"></tbody>
+          </table>
+          <p id="svEmpty" style="text-align:center;color:#aaa;padding:30px;display:none;">No shop videos added yet.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── Settings ── -->
+    <div id="sec-settings" style="display:none;">
+      <div class="admin-topbar"><h1>⚙️ Settings</h1></div>
+      <div class="card" style="max-width:520px;">
+        <h3 style="margin-bottom:16px;font-size:1rem;color:var(--primary-dark);">💳 Order Payment Settings</h3>
+        <div class="form-group">
+          <label>Shop UPI ID *</label>
+          <input id="setUpiId" placeholder="e.g. 9989336847@ybl"/>
+        </div>
+        <div class="form-group">
+          <label>Payee Name</label>
+          <input id="setPayeeName" placeholder="e.g. Janoos Stitching"/>
+        </div>
+        <div class="form-group">
+          <label>Advance Amount (₹) *</label>
+          <input id="setAdvanceAmount" type="number" placeholder="e.g. 999"/>
+          <p style="font-size:0.78rem;color:var(--muted);margin-top:4px;">Amount member pays when placing the order. Remaining = Final Price − Advance.</p>
+        </div>
+        <div style="margin-top:6px;display:flex;gap:10px;align-items:center;">
+          <button class="btn btn-primary" onclick="saveSettings()">Save Settings</button>
+          <span id="settingsSaved" style="color:green;font-size:0.85rem;display:none;">✅ Saved!</span>
+        </div>
+        <p id="settingsErr" style="color:#e74c3c;font-size:.82rem;margin-top:8px;"></p>
+      </div>
+    </div>
+
+    <!-- ── Members ── -->
+    <div id="sec-users" style="display:none;">
+      <div class="admin-topbar">
+        <h1>👥 Members</h1>
+        <button class="btn btn-primary btn-sm" onclick="loadUsers()">↺ Refresh</button>
+      </div>
+      <div class="search-bar">
+        <input type="text" id="userSearch" placeholder="Search name / mobile / ID..." oninput="loadUsers()" style="flex:1;min-width:200px;" />
+        <select id="payFilter" onchange="loadUsers()">
+          <option value="">All Payment Status</option>
+          <option value="pending">Pending</option>
+          <option value="verified">Verified</option>
+          <option value="rejected">Rejected</option>
+        </select>
+        <select id="genderFilter" onchange="loadUsers()">
+          <option value="">All Genders</option>
+          <option value="Women">Women</option>
+          <option value="Men">Men</option>
+        </select>
+      </div>
+      <div class="card" style="padding:0;overflow:hidden;">
+        <div class="table-wrap">
+          <table>
+            <thead><tr>
+              <th>User ID</th><th>Name</th><th>Gender</th><th>Mobile</th><th>UTR</th><th>Payment</th><th>Orders</th><th>Registered</th><th>Actions</th>
+            </tr></thead>
+            <tbody id="usersTableBody"><tr><td colspan="9" style="text-align:center;padding:30px;color:var(--muted);">Loading...</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<!-- Member Orders Modal -->
+<div class="modal-overlay" id="memberOrdersModal">
+  <div class="modal" style="max-width:700px;">
+    <div class="modal-header">
+      <span class="modal-title" id="memberOrdersTitle">Orders</span>
+      <button class="modal-close" onclick="closeMemberOrdersModal()">✕</button>
+    </div>
+    <div style="padding:20px;max-height:70vh;overflow-y:auto;" id="memberOrderCards"></div>
+  </div>
+</div>
+
+<!-- User Profile Modal -->
+<div class="modal-overlay" id="userProfileModal">
+  <div class="modal" style="max-width:600px;">
+    <div class="modal-header">
+      <span class="modal-title" id="userProfileTitle">Member Profile</span>
+      <button class="modal-close" onclick="closeUserProfileModal()">✕</button>
+    </div>
+    <div style="padding:20px;max-height:75vh;overflow-y:auto;">
+      <div id="userProfileView"></div>
+      <div id="userProfileEdit" style="display:none;">
+        <h4 style="margin-bottom:10px;color:var(--primary-dark);">Profile</h4>
+        <div class="form-row">
+          <div class="form-group"><label>Name</label><input id="upName"/></div>
+          <div class="form-group"><label>Email</label><input id="upEmail"/></div>
+        </div>
+        <div class="form-group"><label>Address</label><input id="upAddress"/></div>
+        <div class="form-row">
+          <div class="form-group"><label>UPI ID</label><input id="upUpiId"/></div>
+          <div class="form-group"><label>Gender</label>
+            <select id="upGender"><option value="Women">Women</option><option value="Men">Men</option></select>
+          </div>
+        </div>
+        <h4 style="margin:16px 0 10px;color:var(--primary-dark);">Measurements</h4>
+        <div class="form-row">
+          <div class="form-group"><label>Chest</label><input id="mChest"/></div>
+          <div class="form-group"><label>Waist</label><input id="mWaist"/></div>
+        </div>
+        <div class="form-row">
+          <div class="form-group"><label>Hip</label><input id="mHip"/></div>
+          <div class="form-group"><label>Shoulder</label><input id="mShoulder"/></div>
+        </div>
+        <div class="form-row">
+          <div class="form-group"><label>Collar</label><input id="mCollar"/></div>
+          <div class="form-group"><label>Sleeve Length</label><input id="mSleeveLength"/></div>
+        </div>
+        <div class="form-row">
+          <div class="form-group"><label>Length</label><input id="mLength"/></div>
+          <div class="form-group"><label>Neck</label><input id="mNeck"/></div>
+        </div>
+        <div class="form-row">
+          <div class="form-group"><label>Bicep</label><input id="mBicep"/></div>
+          <div class="form-group"><label>Inseam</label><input id="mInseam"/></div>
+        </div>
+        <div class="form-group"><label>Other</label><input id="mOther"/></div>
+        <p id="userProfileErr" style="color:#e74c3c;font-size:.82rem;margin-top:6px;"></p>
+      </div>
+      <div style="display:flex;gap:10px;margin-top:16px;">
+        <button class="btn btn-primary" id="userProfileEditBtn" onclick="toggleUserProfileEdit()">✏️ Edit</button>
+        <button class="btn btn-primary" id="userProfileSaveBtn" style="display:none;" onclick="saveUserProfile()">💾 Save</button>
+        <button class="btn btn-outline" id="userProfileCancelBtn" style="display:none;" onclick="toggleUserProfileEdit(false)">Cancel</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Order Detail Modal -->
+<div class="modal-overlay" id="orderDetailModal">
+  <div class="modal" style="max-width:600px;">
+    <div class="modal-header">
+      <span class="modal-title" id="orderModalTitle">Order Details</span>
+      <button class="modal-close" onclick="closeOrderModal()">✕</button>
+    </div>
+    <div id="orderModalBody"></div>
+    <hr style="margin:20px 0;border-color:var(--border);" />
+    <div>
+      <p style="font-weight:700;color:var(--primary-dark);margin-bottom:12px;">Update Order</p>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Status</label>
+          <select id="updateStatus">
+            <option>Received</option><option>Measuring</option><option>Cutting</option>
+            <option>Stitching</option><option>Quality Check</option><option>Ready</option><option>Delivered</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Price (₹)</label>
+          <input type="number" id="updatePrice" placeholder="Enter price" />
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Estimated Delivery Date</label>
+        <input type="date" id="updateDelivery" />
+      </div>
+      <button class="btn btn-primary btn-full" onclick="updateOrder()" id="updateOrderBtn">Update Order</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+let adminSession = null;
+let currentOrderId = null;
+
+function showToast(msg, type='') {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.className = 'toast show ' + type;
+  setTimeout(() => t.className='toast', 3500);
+}
+
+// ── Admin Login ────────────────────────────────────────────────────────────────
+async function adminLogin() {
+  const username = document.getElementById('adminUser').value.trim();
+  const password = document.getElementById('adminPass').value;
+  if (!username || !password) return showToast('Enter credentials', 'error');
+  const btn = document.getElementById('adminLoginBtn');
+  btn.disabled = true; btn.textContent = 'Logging in...';
+  try {
+    const res = await fetch('/api/admin/login', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({username, password}) });
+    const data = await res.json();
+    if (!res.ok) return showToast(data.error, 'error');
+    adminSession = data.admin;
+    document.getElementById('adminLoginPage').style.display = 'none';
+    document.getElementById('adminPanel').style.display = 'flex';
+    document.getElementById('adminRoleDisplay').textContent = username + ' · ' + data.admin.role;
+    loadStats();
+    populateVDesignerOptions();
+  } catch(e) { showToast('Network error', 'error'); }
+  finally { btn.disabled=false; btn.textContent='Login to Admin Panel'; }
+}
+
+async function adminLogout() {
+  await fetch('/api/admin/logout', { method:'POST' });
+  adminSession = null;
+  document.getElementById('adminPanel').style.display = 'none';
+  document.getElementById('adminLoginPage').style.display = 'flex';
+}
+
+// ── Navigation ─────────────────────────────────────────────────────────────────
+function showSection(sec) {
+  ['dashboard','users','videos','shopvideos','settings','designers'].forEach(s => {
+    document.getElementById('sec-'+s).style.display = s===sec ? 'block' : 'none';
+  });
+  if (sec === 'shopvideos') loadShopVideos();
+  if (sec === 'settings')   loadSettings();
+  document.querySelectorAll('.admin-sidebar nav a').forEach(a => {
+    a.classList.toggle('active', a.dataset.sec === sec);
+  });
+  if (sec==='users')     loadUsers();
+  if (sec==='videos')    loadAdminVideos();
+  if (sec==='designers') loadDesigners();
+}
+
+// ── Stats ──────────────────────────────────────────────────────────────────────
+async function loadStats() {
+  try {
+    const res = await fetch('/api/admin/stats');
+    if (res.status===401) { adminLogout(); return; }
+    const d = await res.json();
+    document.getElementById('st-total').textContent = d.totalUsers;
+    document.getElementById('st-verified').textContent = d.verifiedUsers;
+    document.getElementById('st-pending').textContent = d.pendingPayments;
+    document.getElementById('st-orders').textContent = d.totalOrders;
+    document.getElementById('st-newtoday').textContent = d.newToday;
+    document.getElementById('st-orderstoday').textContent = d.ordersToday;
+    const colors = { Received:'#1565c0', Measuring:'#7b1fa2', Cutting:'#e65100', Stitching:'#c2185b', 'Quality Check':'#3949ab', Ready:'#2e7d32', Delivered:'#33691e' };
+    document.getElementById('orderStatusChart').innerHTML = (d.ordersByStatus||[]).map(s =>
+      `<div style="background:${colors[s._id]||'#555'}1a;border:1.5px solid ${colors[s._id]||'#555'}40;border-radius:10px;padding:10px 18px;text-align:center;">
+        <div style="font-size:1.3rem;font-weight:800;color:${colors[s._id]||'#555'};">${s.count}</div>
+        <div style="font-size:0.8rem;color:var(--muted);">${s._id}</div>
+      </div>`
+    ).join('');
+  } catch(e) { showToast('Error loading stats', 'error'); }
+}
+
+// ── Users ──────────────────────────────────────────────────────────────────────
+async function loadUsers() {
+  const search = document.getElementById('userSearch').value;
+  const paymentStatus = document.getElementById('payFilter').value;
+  const gender = document.getElementById('genderFilter').value;
+  const params = new URLSearchParams();
+  if (search) params.append('search', search);
+  if (paymentStatus) params.append('paymentStatus', paymentStatus);
+  if (gender) params.append('gender', gender);
+  try {
+    const res = await fetch('/api/admin/users?' + params);
+    if (res.status===401) { adminLogout(); return; }
+    const users = await res.json();
+    document.getElementById('usersTableBody').innerHTML = users.length ? users.map(u => `
+      <tr>
+        <td><code style="font-size:0.82rem;cursor:pointer;color:var(--primary);text-decoration:underline;" onclick="openUserProfile('${u.userId}')">${u.userId}</code></td>
+        <td><b>${u.name}</b></td>
+        <td>${u.gender || 'Women'}</td>
+        <td>${u.mobile}</td>
+        <td><code style="font-size:0.8rem;">${u.utr||'—'}</code></td>
+        <td><span class="badge badge-${u.paymentStatus}">${u.paymentStatus}</span></td>
+        <td><button class="btn btn-sm" style="background:#3498db;color:#fff;" onclick="openMemberOrders('${u.userId}','${u.name.replace(/'/g,"\\'")}')">📦 View Orders</button></td>
+        <td>${new Date(u.regDate).toLocaleDateString('en-IN')}</td>
+        <td>
+          <div style="display:flex;gap:6px;flex-wrap:wrap;">
+            ${u.paymentStatus!=='verified' ? `<button class="btn btn-sm" style="background:#e8f5e9;color:#2e7d32;" onclick="updatePayment('${u.userId}','verified')">✅ Verify</button>` : ''}
+            ${u.paymentStatus!=='rejected' ? `<button class="btn btn-sm" style="background:#ffebee;color:#c62828;" onclick="updatePayment('${u.userId}','rejected')">❌ Reject</button>` : ''}
+            <button class="btn btn-sm btn-danger" onclick="deleteUser('${u.userId}','${u.name}')">🗑</button>
+          </div>
+        </td>
+      </tr>`).join('') : '<tr><td colspan="9" style="text-align:center;padding:30px;color:var(--muted);">No members found</td></tr>';
+  } catch(e) { showToast('Error loading users', 'error'); }
+}
+
+async function updatePayment(userId, status) {
+  if (!confirm(`Mark payment as ${status}?`)) return;
+  const res = await fetch(`/api/admin/users/${userId}/payment`, { method:'PUT', headers:{'Content-Type':'application/json'}, body: JSON.stringify({status}) });
+  const data = await res.json();
+  if (!res.ok) return showToast(data.error, 'error');
+  showToast(`Payment marked as ${status}`, 'success');
+  loadUsers();
+}
+
+async function deleteUser(userId, name) {
+  if (!confirm(`Delete member "${name}"? This cannot be undone.`)) return;
+  const res = await fetch(`/api/admin/users/${userId}`, { method:'DELETE' });
+  if (!res.ok) return showToast('Error deleting user', 'error');
+  showToast('Member deleted', 'success');
+  loadUsers(); loadStats();
+}
+
+// ── Member Profile ───────────────────────────────────────────────────────────────
+let currentProfileUser = null;
+const MEASUREMENT_FIELDS = ['chest','waist','hip','shoulder','collar','sleeveLength','length','neck','bicep','inseam','other'];
+
+async function openUserProfile(userId) {
+  document.getElementById('userProfileTitle').textContent = 'Member Profile';
+  document.getElementById('userProfileModal').classList.add('open');
+  document.getElementById('userProfileView').innerHTML = '<p style="text-align:center;color:var(--muted);padding:30px;">Loading...</p>';
+  toggleUserProfileEdit(false);
+  try {
+    const res = await fetch(`/api/admin/users/${userId}`);
+    if (res.status===401) { adminLogout(); return; }
+    const d = await res.json();
+    if (!d.success) return showToast(d.error, 'error');
+    currentProfileUser = d.user;
+    renderUserProfileView();
+  } catch(e) { showToast('Error loading profile', 'error'); }
+}
+
+function renderUserProfileView() {
+  const u = currentProfileUser;
+  const m = u.measurements || {};
+  const hasMeasurements = MEASUREMENT_FIELDS.some(f => m[f]);
+  document.getElementById('userProfileTitle').textContent = `👤 ${u.name}`;
+  document.getElementById('userProfileView').innerHTML = `
+    <p><b>User ID:</b> <code>${u.userId}</code></p>
+    <p><b>Mobile:</b> ${u.mobile}</p>
+    <p><b>Gender:</b> ${u.gender || 'Women'}</p>
+    <p><b>Email:</b> ${u.email || '—'}</p>
+    <p><b>Address:</b> ${u.address || '—'}</p>
+    <p><b>UPI ID:</b> ${u.upiId || '—'}</p>
+    <p><b>UTR:</b> ${u.utr || '—'}</p>
+    <p><b>Payment Status:</b> <span class="badge badge-${u.paymentStatus}">${u.paymentStatus}</span></p>
+    <p><b>Registered:</b> ${new Date(u.regDate).toLocaleDateString('en-IN')}</p>
+    <h4 style="margin:16px 0 8px;color:var(--primary-dark);">Measurements</h4>
+    ${hasMeasurements ? `<div style="display:grid;grid-template-columns:1fr 1fr;gap:4px 16px;">
+      ${MEASUREMENT_FIELDS.map(f => `<p><b>${f.charAt(0).toUpperCase()+f.slice(1).replace(/([A-Z])/g,' $1')}:</b> ${m[f] || '—'}</p>`).join('')}
+    </div>` : '<p style="color:var(--muted);">No measurements saved yet.</p>'}
+  `;
+}
+
+function toggleUserProfileEdit(show = true) {
+  document.getElementById('userProfileView').style.display = show ? 'none' : 'block';
+  document.getElementById('userProfileEdit').style.display = show ? 'block' : 'none';
+  document.getElementById('userProfileEditBtn').style.display = show ? 'none' : 'inline-block';
+  document.getElementById('userProfileSaveBtn').style.display = show ? 'inline-block' : 'none';
+  document.getElementById('userProfileCancelBtn').style.display = show ? 'inline-block' : 'none';
+  document.getElementById('userProfileErr').textContent = '';
+  if (show && currentProfileUser) {
+    const u = currentProfileUser;
+    const m = u.measurements || {};
+    document.getElementById('upName').value = u.name || '';
+    document.getElementById('upEmail').value = u.email || '';
+    document.getElementById('upAddress').value = u.address || '';
+    document.getElementById('upUpiId').value = u.upiId || '';
+    document.getElementById('upGender').value = u.gender || 'Women';
+    MEASUREMENT_FIELDS.forEach(f => {
+      const el = document.getElementById('m' + f.charAt(0).toUpperCase() + f.slice(1));
+      if (el) el.value = m[f] || '';
+    });
+  }
+}
+
+async function saveUserProfile() {
+  const measurements = {};
+  MEASUREMENT_FIELDS.forEach(f => {
+    const el = document.getElementById('m' + f.charAt(0).toUpperCase() + f.slice(1));
+    measurements[f] = el.value.trim();
+  });
+  const body = {
+    name: document.getElementById('upName').value.trim(),
+    email: document.getElementById('upEmail').value.trim(),
+    address: document.getElementById('upAddress').value.trim(),
+    upiId: document.getElementById('upUpiId').value.trim(),
+    gender: document.getElementById('upGender').value,
+    measurements,
+  };
+  try {
+    const res = await fetch(`/api/admin/users/${currentProfileUser.userId}/profile`, { method:'PUT', headers:{'Content-Type':'application/json'}, body: JSON.stringify(body) });
+    const d = await res.json();
+    if (!d.success) { document.getElementById('userProfileErr').textContent = d.error; return; }
+    currentProfileUser = d.user;
+    renderUserProfileView();
+    toggleUserProfileEdit(false);
+    showToast('Profile updated!', 'success');
+    loadUsers();
+  } catch(e) { document.getElementById('userProfileErr').textContent = 'Network error'; }
+}
+
+function closeUserProfileModal() {
+  document.getElementById('userProfileModal').classList.remove('open');
+  currentProfileUser = null;
+}
+
+// ── Member Orders (with payment verification) ───────────────────────────────────
+function paymentBadge(label, status) {
+  const colors = {
+    verified: ['#d4edda','#155724'], rejected: ['#f8d7da','#721c24'],
+    pending: ['#fff3cd','#856404'], not_required: ['#e9ecef','#6c757d'],
+  };
+  const [bg, fg] = colors[status] || colors.pending;
+  return `<span style="font-size:0.72rem;font-weight:700;padding:2px 8px;border-radius:12px;background:${bg};color:${fg};">${label}: ${(status||'pending').replace('_',' ').toUpperCase()}</span>`;
+}
+
+let currentMemberUserId = null, currentMemberUserName = null;
+
+async function openMemberOrders(userId, userName) {
+  currentMemberUserId = userId; currentMemberUserName = userName;
+  document.getElementById('memberOrdersTitle').textContent = `📦 Orders — ${userName}`;
+  document.getElementById('memberOrderCards').innerHTML = '<p style="text-align:center;color:var(--muted);padding:30px;">Loading...</p>';
+  document.getElementById('memberOrdersModal').classList.add('open');
+  try {
+    const res = await fetch('/api/admin/orders?userId=' + encodeURIComponent(userId));
+    if (res.status===401) { adminLogout(); return; }
+    const orders = await res.json();
+    document.getElementById('memberOrderCards').innerHTML = orders.length ? orders.map(o => `
+      <div class="order-card" style="cursor:pointer;" onclick="openOrderModal('${o.orderId}')">
+        <div class="order-card-header">
+          <div>
+            <div class="order-id">${o.orderId}</div>
+            <div class="order-meta">
+              <span>👗 ${o.category}</span>
+              <span>⏱ ${o.urgency}</span>
+              <span>📅 ${new Date(o.createdAt).toLocaleDateString('en-IN')}</span>
+              ${o.price ? `<span>💰 ₹${o.price}</span>` : ''}
+            </div>
+            <div class="order-meta" style="margin-top:6px;gap:6px;">
+              ${paymentBadge('Advance', o.advanceStatus)}
+              ${paymentBadge('Remaining', o.remainingStatus)}
+            </div>
+          </div>
+          <span class="order-status status-${o.status.replace(' ','')}">${o.status}</span>
+        </div>
+        <p style="font-size:0.88rem;color:var(--muted);margin-top:8px;">${o.description.slice(0,120)}${o.description.length>120?'...':''}</p>
+        ${(o.referenceImages||[]).length ? `<div class="order-images" style="margin-top:10px;">${o.referenceImages.slice(0,4).map(u=>`<img src="${u}" />`).join('')}</div>` : ''}
+      </div>
+    `).join('') : '<div style="text-align:center;padding:60px;color:var(--muted);">No orders found</div>';
+  } catch(e) { showToast('Error loading orders', 'error'); }
+}
+
+function closeMemberOrdersModal() {
+  document.getElementById('memberOrdersModal').classList.remove('open');
+}
+
+async function openOrderModal(orderId) {
+  currentOrderId = orderId;
+  try {
+    const res = await fetch('/api/admin/orders?search=' + orderId);
+    const orders = await res.json();
+    const o = orders.find(x => x.orderId === orderId);
+    if (!o) return;
+    const m = o.measurements || {};
+    document.getElementById('orderModalTitle').textContent = 'Order: ' + o.orderId;
+    document.getElementById('updateStatus').value = o.status;
+    document.getElementById('updatePrice').value = o.price || '';
+    document.getElementById('updateDelivery').value = o.estimatedDelivery ? new Date(o.estimatedDelivery).toISOString().split('T')[0] : '';
+    document.getElementById('orderModalBody').innerHTML = `
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:0.9rem;margin-bottom:12px;">
+        <p><b>Customer:</b> ${o.userName}</p>
+        <p><b>Mobile:</b> ${o.userMobile}</p>
+        <p><b>Gender:</b> ${o.gender||'—'}</p>
+        <p><b>Category:</b> ${o.category}</p>
+        <p><b>Urgency:</b> ${o.urgency}</p>
+        <p><b>Fabric:</b> ${o.fabric||'—'}</p>
+        <p><b>Colour:</b> ${o.colour||'—'}</p>
+      </div>
+      <p style="font-size:0.9rem;margin-bottom:10px;"><b>Description:</b> ${o.description}</p>
+      ${Object.values(m).some(v=>v) ? `<p style="font-size:0.88rem;font-weight:700;margin-bottom:6px;">Measurements:</p>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px;font-size:0.85rem;margin-bottom:10px;">
+        ${Object.entries(m).filter(([k,v])=>v).map(([k,v])=>`<p><b>${k}:</b> ${v}</p>`).join('')}
+      </div>` : ''}
+      ${o.specialInstructions ? `<p style="font-size:0.88rem;"><b>Special:</b> ${o.specialInstructions}</p>` : ''}
+      ${o.shopVideoUrl ? `<p style="font-size:0.88rem;margin-top:8px;"><b>Shop Video:</b> <a href="${o.shopVideoUrl}" target="_blank" style="color:var(--primary);">View Video ↗</a></p>` : ''}
+      ${o.designerStyleVideoUrl ? `<p style="font-size:0.88rem;margin-top:6px;"><b>Designer Style Video:</b> <a href="${o.designerStyleVideoUrl}" target="_blank" style="color:var(--primary);">View Video ↗</a></p>` : ''}
+      ${o.customerStyleVideoUrl ? `<p style="font-size:0.88rem;margin-top:6px;"><b>Customer Style Video:</b> <a href="${o.customerStyleVideoUrl}" target="_blank" style="color:var(--primary);">View Video ↗</a></p>` : ''}
+      ${o.movieStyleVideoUrl ? `<p style="font-size:0.88rem;margin-top:6px;"><b>Movie Style Video:</b> <a href="${o.movieStyleVideoUrl}" target="_blank" style="color:var(--primary);">View Video ↗</a></p>` : ''}
+      ${(o.referenceImages||[]).length ? `<div class="order-images" style="margin-top:10px;">${o.referenceImages.map(u=>`<img src="${u}" style="width:80px;height:80px;" />`).join('')}</div>` : ''}
+      <hr style="margin:14px 0;border-color:var(--border);"/>
+      <p style="font-weight:700;font-size:0.9rem;margin-bottom:10px;">💳 Payment</p>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:0.85rem;">
+        <div style="background:#f9f0fc;border-radius:8px;padding:10px;">
+          <p style="font-weight:700;margin-bottom:4px;">Advance ₹${o.advanceAmount||0}</p>
+          <p style="color:var(--muted);margin-bottom:6px;">UTR: ${o.advanceUtr||'—'}</p>
+          <span style="font-size:0.78rem;font-weight:700;padding:3px 8px;border-radius:20px;background:${o.advanceStatus==='verified'?'#d4edda':o.advanceStatus==='rejected'?'#f8d7da':'#fff3cd'};color:${o.advanceStatus==='verified'?'#155724':o.advanceStatus==='rejected'?'#721c24':'#856404'};">${(o.advanceStatus||'pending').toUpperCase()}</span>
+          ${o.advanceStatus==='pending'&&o.advanceUtr ? `<div style="margin-top:8px;display:flex;gap:6px;">
+            <button class="btn btn-sm" style="background:#27ae60;color:#fff;" onclick="verifyPayment('${o.orderId}','advance','verified')">✓ Verify</button>
+            <button class="btn btn-sm btn-danger" onclick="verifyPayment('${o.orderId}','advance','rejected')">✗ Reject</button>
+          </div>` : ''}
+        </div>
+        <div style="background:#f0f7fc;border-radius:8px;padding:10px;">
+          <p style="font-weight:700;margin-bottom:4px;">Remaining ₹${Math.max(0,(o.price||0)-(o.advanceAmount||0))}</p>
+          <p style="color:var(--muted);margin-bottom:6px;">UTR: ${o.remainingUtr||'—'}</p>
+          <span style="font-size:0.78rem;font-weight:700;padding:3px 8px;border-radius:20px;background:${o.remainingStatus==='verified'?'#d4edda':o.remainingStatus==='rejected'?'#f8d7da':o.remainingStatus==='not_required'?'#e9ecef':'#fff3cd'};color:${o.remainingStatus==='verified'?'#155724':o.remainingStatus==='rejected'?'#721c24':o.remainingStatus==='not_required'?'#6c757d':'#856404'};">${(o.remainingStatus||'not_required').replace('_',' ').toUpperCase()}</span>
+          ${o.remainingStatus==='pending'&&o.remainingUtr ? `<div style="margin-top:8px;display:flex;gap:6px;">
+            <button class="btn btn-sm" style="background:#27ae60;color:#fff;" onclick="verifyPayment('${o.orderId}','remaining','verified')">✓ Verify</button>
+            <button class="btn btn-sm btn-danger" onclick="verifyPayment('${o.orderId}','remaining','rejected')">✗ Reject</button>
+          </div>` : ''}
+        </div>
+      </div>
+    `;
+    document.getElementById('orderDetailModal').classList.add('open');
+  } catch(e) { showToast('Error loading order', 'error'); }
+}
+
+function closeOrderModal() {
+  document.getElementById('orderDetailModal').classList.remove('open');
+  currentOrderId = null;
+}
+
+async function updateOrder() {
+  if (!currentOrderId) return;
+  const status = document.getElementById('updateStatus').value;
+  const price = document.getElementById('updatePrice').value;
+  const estimatedDelivery = document.getElementById('updateDelivery').value;
+  const btn = document.getElementById('updateOrderBtn');
+  btn.disabled = true; btn.textContent = 'Updating...';
+  try {
+    const res = await fetch(`/api/admin/orders/${currentOrderId}`, {
+      method:'PUT', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ status, price: price ? Number(price) : undefined, estimatedDelivery: estimatedDelivery || undefined })
+    });
+    const data = await res.json();
+    if (!res.ok) return showToast(data.error, 'error');
+    showToast('Order updated!', 'success');
+    closeOrderModal();
+    if (currentMemberUserId) openMemberOrders(currentMemberUserId, currentMemberUserName);
+  } catch(e) { showToast('Error updating order', 'error'); }
+  finally { btn.disabled=false; btn.textContent='Update Order'; }
+}
+
+// ── Designers ──────────────────────────────────────────────────────────────────
+let editingDesignerId = null;
+
+async function loadDesigners() {
+  const r = await fetch('/api/admin/designers');
+  const d = await r.json();
+  const tbody = document.getElementById('designersTableBody');
+  tbody.innerHTML = '';
+  document.getElementById('designersEmpty').style.display = d.data.length ? 'none' : '';
+  d.data.forEach(des => {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td><strong>${des.name}</strong></td>
+      <td>${des.email}</td>
+      <td>${des.mobile||'—'}</td>
+      <td>${des.city||'—'}</td>
+      <td><span style="padding:2px 10px;border-radius:12px;font-size:.75rem;font-weight:600;background:${des.isActive?'#e6f9f0':'#fdecea'};color:${des.isActive?'#27ae60':'#e74c3c'}">${des.isActive?'Active':'Inactive'}</span></td>
+      <td style="font-size:.82rem;color:#666;">${new Date(des.createdAt).toLocaleDateString('en-IN')}</td>
+      <td style="white-space:nowrap;">
+        <button class="btn btn-sm" style="background:#3498db;color:#fff;" onclick='editDesigner(${JSON.stringify(des)})'>Edit</button>
+        &nbsp;<button class="btn btn-sm btn-danger" onclick="deleteDesigner('${des._id}','${des.name}')">Delete</button>
+      </td>`;
+    tbody.appendChild(tr);
+  });
+}
+
+function editDesigner(des) {
+  editingDesignerId = des._id;
+  document.getElementById('dName').value    = des.name;
+  document.getElementById('dEmail').value   = des.email;
+  document.getElementById('dMobile').value  = des.mobile || '';
+  document.getElementById('dCity').value    = des.city || '';
+  document.getElementById('dAddress').value = des.address || '';
+  document.getElementById('dPassword').value = '';
+  document.getElementById('dPasswordHint').textContent = '(leave blank to keep unchanged)';
+  document.getElementById('dStatus').value  = String(des.isActive);
+  document.getElementById('designerFormTitle').textContent  = 'Edit Designer';
+  document.getElementById('designerSubmitBtn').textContent  = 'Update Designer';
+  document.getElementById('cancelDesignerBtn').style.display = '';
+  document.getElementById('designerErr').textContent = '';
+  document.getElementById('sec-designers').scrollIntoView({ behavior: 'smooth' });
+}
+
+function cancelDesignerEdit() {
+  editingDesignerId = null;
+  ['dName','dEmail','dMobile','dCity','dAddress','dPassword'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('dPasswordHint').textContent = '*';
+  document.getElementById('dStatus').value = 'true';
+  document.getElementById('designerFormTitle').textContent = 'Add Designer';
+  document.getElementById('designerSubmitBtn').textContent = 'Add Designer';
+  document.getElementById('cancelDesignerBtn').style.display = 'none';
+  document.getElementById('designerErr').textContent = '';
+}
+
+async function submitDesigner() {
+  const name     = document.getElementById('dName').value.trim();
+  const email    = document.getElementById('dEmail').value.trim();
+  const mobile   = document.getElementById('dMobile').value.trim();
+  const city     = document.getElementById('dCity').value.trim();
+  const address  = document.getElementById('dAddress').value.trim();
+  const password = document.getElementById('dPassword').value;
+  const isActive = document.getElementById('dStatus').value === 'true';
+  document.getElementById('designerErr').textContent = '';
+  if (!name || !email || (!editingDesignerId && !password)) {
+    document.getElementById('designerErr').textContent = 'Name, email and password are required.'; return;
+  }
+  const url    = editingDesignerId ? `/api/admin/designers/${editingDesignerId}` : '/api/admin/designers';
+  const method = editingDesignerId ? 'PATCH' : 'POST';
+  const body = { name, email, mobile, city, address, isActive };
+  if (password) body.password = password;
+  const r = await fetch(url, { method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+  const d = await r.json();
+  if (!d.success) { document.getElementById('designerErr').textContent = d.error; return; }
+  showToast(editingDesignerId ? 'Designer updated!' : 'Designer added!', 'success');
+  cancelDesignerEdit();
+  loadDesigners();
+}
+
+async function deleteDesigner(id, name) {
+  if (!confirm(`Delete designer "${name}"? Their existing style videos will remain but become unassigned.`)) return;
+  await fetch(`/api/admin/designers/${id}`, { method: 'DELETE' });
+  showToast('Designer deleted', 'success');
+  loadDesigners();
+}
+
+// ── Videos ─────────────────────────────────────────────────────────────────────
+let editingVideoId = null;
+
+const VIDEO_CATEGORIES_BY_GENDER = {
+  Women: ['Blouse', 'Salwar Kameez', 'Lehenga', 'Kurti', 'Saree Blouse', 'Churidar', 'Anarkali', 'Other'],
+  Men: ['Shirt', 'Kurta Pyjama', 'Trousers', 'Other'],
+};
+
+function populateVCategoryOptions() {
+  const gender = document.getElementById('vGender').value;
+  const select = document.getElementById('vCategory');
+  const prev = select.value;
+  select.innerHTML = '<option value="">— Select Category —</option>' +
+    VIDEO_CATEGORIES_BY_GENDER[gender].map(c => `<option>${c}</option>`).join('');
+  if (VIDEO_CATEGORIES_BY_GENDER[gender].includes(prev)) select.value = prev;
+}
+populateVCategoryOptions();
+
+async function populateVDesignerOptions() {
+  const select = document.getElementById('vDesigner');
+  const prev = select.value;
+  const r = await fetch('/api/admin/designers');
+  const d = await r.json();
+  select.innerHTML = '<option value="">— Admin (no designer) —</option>' +
+    (d.data || []).map(des => `<option value="${des._id}">${des.name}</option>`).join('');
+  select.value = prev;
+}
+populateVDesignerOptions();
+
+async function loadAdminVideos() {
+  const r = await fetch('/api/admin/videos');
+  const d = await r.json();
+  const tbody = document.getElementById('videosTableBody');
+  tbody.innerHTML = '';
+  document.getElementById('videosEmpty').style.display = d.data.length ? 'none' : '';
+  d.data.forEach(v => {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td><strong>${v.title}</strong></td>
+      <td>${v.gender||'Women'}</td>
+      <td>${v.category}</td>
+      <td><a href="${v.videoUrl}" target="_blank" style="color:#c0487a;font-size:.8rem;word-break:break-all;">${v.videoUrl.slice(0,50)}${v.videoUrl.length>50?'…':''}</a></td>
+      <td style="font-size:.82rem;color:#666;">${v.description||'—'}</td>
+      <td style="font-size:.82rem;color:#666;">${v.designerId?.name || 'Admin'}</td>
+      <td><span style="padding:2px 10px;border-radius:12px;font-size:.75rem;font-weight:600;background:${v.isActive?'#e6f9f0':'#fdecea'};color:${v.isActive?'#27ae60':'#e74c3c'}">${v.isActive?'Active':'Inactive'}</span></td>
+      <td style="white-space:nowrap;">
+        <button class="btn btn-sm" style="background:#3498db;color:#fff;" onclick='editVideo(${JSON.stringify(v)})'>Edit</button>
+        &nbsp;<button class="btn btn-sm btn-danger" onclick="deleteVideo('${v._id}','${v.title}')">Delete</button>
+      </td>`;
+    tbody.appendChild(tr);
+  });
+}
+
+function editVideo(v) {
+  editingVideoId = v._id;
+  document.getElementById('vTitle').value    = v.title;
+  document.getElementById('vGender').value   = v.gender || 'Women';
+  populateVCategoryOptions();
+  document.getElementById('vCategory').value = v.category;
+  document.getElementById('vDesigner').value = v.designerId?._id || v.designerId || '';
+  document.getElementById('vUrl').value      = v.videoUrl;
+  document.getElementById('vDesc').value     = v.description || '';
+  document.getElementById('vStatus').value   = String(v.isActive);
+  document.getElementById('videoFormTitle').textContent  = 'Edit Designer Style Video';
+  document.getElementById('videoSubmitBtn').textContent  = 'Update Video';
+  document.getElementById('cancelVideoBtn').style.display = '';
+  document.getElementById('videoErr').textContent = '';
+  document.getElementById('sec-videos').scrollIntoView({ behavior: 'smooth' });
+}
+
+function cancelVideoEdit() {
+  editingVideoId = null;
+  ['vTitle','vUrl','vDesc'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('vGender').value   = 'Women';
+  populateVCategoryOptions();
+  document.getElementById('vDesigner').value = '';
+  document.getElementById('vStatus').value   = 'true';
+  document.getElementById('videoFormTitle').textContent   = 'Add Designer Style Video';
+  document.getElementById('videoSubmitBtn').textContent   = 'Add Video';
+  document.getElementById('cancelVideoBtn').style.display = 'none';
+  document.getElementById('videoErr').textContent = '';
+}
+
+async function submitVideo() {
+  const title    = document.getElementById('vTitle').value.trim();
+  const gender   = document.getElementById('vGender').value;
+  const category = document.getElementById('vCategory').value;
+  const designerId = document.getElementById('vDesigner').value || null;
+  const videoUrl = document.getElementById('vUrl').value.trim();
+  const description = document.getElementById('vDesc').value.trim();
+  const isActive = document.getElementById('vStatus').value === 'true';
+  document.getElementById('videoErr').textContent = '';
+  if (!title || !category || !videoUrl) {
+    document.getElementById('videoErr').textContent = 'Title, category and video URL are required.'; return;
+  }
+  const url    = editingVideoId ? `/api/admin/videos/${editingVideoId}` : '/api/admin/videos';
+  const method = editingVideoId ? 'PATCH' : 'POST';
+  const r = await fetch(url, { method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ title, gender, category, designerId, videoUrl, description, isActive }) });
+  const d = await r.json();
+  if (!d.success) { document.getElementById('videoErr').textContent = d.error; return; }
+  showToast(editingVideoId ? 'Video updated!' : 'Video added!', 'success');
+  cancelVideoEdit();
+  loadAdminVideos();
+}
+
+async function deleteVideo(id, title) {
+  if (!confirm(`Delete video "${title}"?`)) return;
+  await fetch(`/api/admin/videos/${id}`, { method: 'DELETE' });
+  showToast('Video deleted', 'success');
+  loadAdminVideos();
+}
+
+// ── Shop Videos ──────────────────────────────────────────────────────────────
+let allShopVideos = [];
+let editingSvId = null;
+
+async function loadShopVideos() {
+  const res = await fetch('/api/admin/shop-videos', { credentials: 'include' });
+  const d = await res.json();
+  allShopVideos = d.data || [];
+  const tbody = document.getElementById('svTableBody');
+  const empty = document.getElementById('svEmpty');
+  tbody.innerHTML = '';
+  if (!allShopVideos.length) { empty.style.display = 'block'; return; }
+  empty.style.display = 'none';
+  allShopVideos.forEach(v => {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td>${v.title}</td>
+      <td style="max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;"><a href="${v.videoUrl}" target="_blank" style="color:var(--primary);">${v.videoUrl}</a></td>
+      <td>${v.shopWhatsappNo || ''}</td>
+      <td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${v.description || ''}</td>
+      <td><span class="badge badge-${v.isActive ? 'verified' : 'pending'}">${v.isActive ? 'Active' : 'Inactive'}</span></td>
+      <td style="white-space:nowrap;">
+        <button class="btn btn-sm" style="background:#3498db;color:#fff;" onclick="editSv('${v._id}')">Edit</button>
+        &nbsp;<button class="btn btn-sm btn-danger" onclick="deleteSv('${v._id}','${(v.title || '').replace(/'/g, "\\'")}')">Delete</button>
+      </td>`;
+    tbody.appendChild(tr);
+  });
+}
+
+function editSv(id) {
+  const v = allShopVideos.find(x => x._id === id);
+  if (!v) return;
+  editingSvId = v._id;
+  document.getElementById('svTitle').value = v.title;
+  document.getElementById('svUrl').value = v.videoUrl;
+  document.getElementById('svWhatsapp').value = v.shopWhatsappNo || '';
+  document.getElementById('svDescription').value = v.description || '';
+  document.getElementById('svStatus').value = String(v.isActive);
+  document.getElementById('svFormTitle').textContent = 'Edit Shop Video';
+  document.getElementById('svSubmitBtn').textContent = 'Update Video';
+  document.getElementById('cancelSvBtn').style.display = 'inline-block';
+}
+
+function cancelSvEdit() {
+  editingSvId = null;
+  ['svTitle','svUrl','svWhatsapp','svDescription'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('svStatus').value = 'true';
+  document.getElementById('svFormTitle').textContent = 'Add Shop Video';
+  document.getElementById('svSubmitBtn').textContent = 'Add Video';
+  document.getElementById('cancelSvBtn').style.display = 'none';
+  document.getElementById('svErr').textContent = '';
+}
+
+async function submitShopVideo() {
+  const title    = document.getElementById('svTitle').value.trim();
+  const videoUrl = document.getElementById('svUrl').value.trim();
+  const shopWhatsappNo = document.getElementById('svWhatsapp').value.trim();
+  const description = document.getElementById('svDescription').value.trim();
+  const isActive = document.getElementById('svStatus').value === 'true';
+  document.getElementById('svErr').textContent = '';
+  if (!title || !videoUrl) { document.getElementById('svErr').textContent = 'Title and Video URL are required.'; return; }
+  const url    = editingSvId ? `/api/admin/shop-videos/${editingSvId}` : '/api/admin/shop-videos';
+  const method = editingSvId ? 'PATCH' : 'POST';
+  const res = await fetch(url, { method, credentials: 'include', headers: { 'Content-Type':'application/json' }, body: JSON.stringify({ title, videoUrl, shopWhatsappNo, description, isActive }) });
+  const d = await res.json();
+  if (!d.success) { document.getElementById('svErr').textContent = d.error; return; }
+  showToast(editingSvId ? 'Shop video updated!' : 'Shop video added!', 'success');
+  cancelSvEdit();
+  loadShopVideos();
+}
+
+async function deleteSv(id, title) {
+  if (!confirm(`Delete shop video "${title}"?`)) return;
+  await fetch(`/api/admin/shop-videos/${id}`, { method: 'DELETE', credentials: 'include' });
+  showToast('Shop video deleted', 'success');
+  loadShopVideos();
+}
+
+// ── Payment verification ──────────────────────────────────────────────────────
+async function verifyPayment(orderId, type, status) {
+  const res = await fetch(`/api/admin/orders/${orderId}/payment`, {
+    method: 'PATCH', credentials: 'include',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ type, status })
+  });
+  const d = await res.json();
+  if (d.success) {
+    showToast((type === 'advance' ? 'Advance' : 'Remaining') + ' payment ' + status + '!', 'success');
+    openOrderModal(orderId);
+  } else {
+    showToast(d.error, 'error');
+  }
+}
+
+// ── Settings ──────────────────────────────────────────────────────────────────
+async function loadSettings() {
+  const res = await fetch('/api/admin/settings', { credentials: 'include' });
+  const d = await res.json();
+  if (!d.success) return;
+  document.getElementById('setUpiId').value = d.upiId || '';
+  document.getElementById('setPayeeName').value = d.payeeName || '';
+  document.getElementById('setAdvanceAmount').value = d.advanceAmount || 999;
+}
+
+async function saveSettings() {
+  const upiId         = document.getElementById('setUpiId').value.trim();
+  const payeeName     = document.getElementById('setPayeeName').value.trim();
+  const advanceAmount = document.getElementById('setAdvanceAmount').value;
+  document.getElementById('settingsErr').textContent = '';
+  if (!upiId || !advanceAmount) { document.getElementById('settingsErr').textContent = 'UPI ID and advance amount are required.'; return; }
+  const res = await fetch('/api/admin/settings/order-payment', {
+    method: 'PATCH', credentials: 'include',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ upiId, payeeName, advanceAmount: Number(advanceAmount) })
+  });
+  const d = await res.json();
+  if (d.success) {
+    const saved = document.getElementById('settingsSaved');
+    saved.style.display = 'inline'; setTimeout(() => saved.style.display = 'none', 2500);
+  } else {
+    document.getElementById('settingsErr').textContent = d.error;
+  }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,824 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Dashboard – Janoos</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+<nav class="navbar">
+  <div class="logo">
+    <div style="width:38px;height:38px;border-radius:50%;background:rgba(255,255,255,0.3);display:flex;align-items:center;justify-content:center;font-size:1.3rem;border:2px solid #fff;">✂️</div>
+    <div>
+      <div class="logo-text">Janoos</div>
+      <div class="logo-sub">Customised Stitching</div>
+    </div>
+  </div>
+  <nav>
+    <button onclick="logout()" style="background:rgba(255,255,255,0.15);color:#fff;border:1.5px solid rgba(255,255,255,0.4);padding:8px 18px;border-radius:24px;cursor:pointer;font-size:0.92rem;">Logout</button>
+  </nav>
+</nav>
+
+<div class="dashboard" id="dashboardMain" style="display:none;">
+
+  <!-- Welcome -->
+  <div class="dash-welcome">
+    <div class="dash-avatar" id="userAvatar">J</div>
+    <div>
+      <h2 id="welcomeName">Welcome!</h2>
+      <p id="welcomeSub">Janoos Member</p>
+      <div id="paymentBadge"></div>
+    </div>
+  </div>
+
+  <!-- Tabs -->
+  <div class="dash-tabs">
+    <button class="dash-tab active" onclick="switchTab('new-order')">✂️ New Order</button>
+    <button class="dash-tab" onclick="switchTab('my-orders')">📦 My Orders</button>
+    <button class="dash-tab" onclick="switchTab('profile')">👤 Profile</button>
+  </div>
+
+  <!-- Tab: New Order -->
+  <div class="tab-content active" id="tab-new-order">
+    <div class="card" style="max-width:680px;">
+      <h3 style="font-size:1.1rem;font-weight:800;color:var(--primary-dark);margin-bottom:20px;">📸 Place a New Order</h3>
+
+      <div class="form-group">
+        <label>Shop Video <span style="font-weight:400;color:var(--muted);">(optional)</span></label>
+        <select id="shopVideoUrl" onchange="onShopVideoChange()" style="width:100%;padding:10px 14px;border:1.5px solid var(--border);border-radius:10px;font-size:0.95rem;background:#fff;color:var(--text);">
+          <option value="">— Select a shop video —</option>
+        </select>
+        <div id="shopVideoLink" style="display:none;margin-top:8px;">
+          <a id="shopVideoAnchor" href="#" target="_blank" style="font-size:0.88rem;color:var(--primary);font-weight:600;word-break:break-all;">▶ Watch Video ↗</a>
+        </div>
+        <p style="font-size:0.8rem;color:var(--muted);margin-top:4px;">Pick a shop video that matches the style you want stitched</p>
+      </div>
+
+      <div class="form-group">
+        <label>Upload Reference Images * (up to 5 photos)</label>
+        <div class="upload-area" id="uploadArea">
+          <input type="file" id="imageInput" multiple accept="image/*" onchange="previewImages(event)" />
+          <div class="upload-icon">📷</div>
+          <p>Click to upload or drag images here</p>
+          <p style="font-size:0.8rem;color:var(--muted);margin-top:4px;">Max 5 images, 10MB each</p>
+        </div>
+        <div class="upload-preview" id="uploadPreview"></div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label>Gender *</label>
+          <select id="gender" onchange="onGenderChange()">
+            <option value="Women">Women</option>
+            <option value="Men">Men</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Dress Category *</label>
+          <select id="category" onchange="loadOrderStyleVideos()"></select>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label>Designer <span style="font-weight:400;color:var(--muted);">(optional — pick one to see their style videos)</span></label>
+        <select id="designer" onchange="onDesignerChange()">
+          <option value="">— All Designers —</option>
+        </select>
+        <div id="designerContactBox" style="display:none;align-items:center;gap:6px;margin-top:8px;padding:10px 14px;border-radius:10px;background:var(--bg);border:1px solid var(--border);font-size:0.88rem;">
+          <span id="designerContactInfo"></span>
+        </div>
+      </div>
+
+      <div class="form-group" id="orderVideosSection" style="display:none;">
+        <label>🎬 Designer Style Videos <span style="font-weight:400;color:var(--muted);">(optional — pick one to guide the tailor)</span></label>
+        <input type="hidden" id="designerStyleVideoUrl" />
+        <div id="orderVideosGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:12px;margin-top:8px;"></div>
+      </div>
+
+      <div class="form-group">
+        <label>Your Own Style Video URL <span style="font-weight:400;color:var(--muted);">(optional)</span></label>
+        <input type="text" id="customerStyleVideoUrl" placeholder="Paste a reference video link you found (YouTube, Instagram, etc.)" />
+      </div>
+
+      <div class="form-group">
+        <label>Movie Style Video URL <span style="font-weight:400;color:var(--muted);">(optional)</span></label>
+        <input type="text" id="movieStyleVideoUrl" placeholder="Paste a movie/character look reference video link" />
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label>Urgency</label>
+          <select id="urgency">
+            <option>Standard (7-10 days)</option>
+            <option>Express (3-5 days)</option>
+            <option>Urgent (1-2 days)</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label>Design Description *</label>
+        <textarea id="description" placeholder="Describe exactly how you want the dress — style, cut, embroidery, border, etc..."></textarea>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label>Fabric / Material</label>
+          <input type="text" id="fabric" placeholder="e.g. Cotton, Silk, Georgette" />
+        </div>
+        <div class="form-group">
+          <label>Colour Preference</label>
+          <input type="text" id="colour" placeholder="e.g. Red, Navy Blue" />
+        </div>
+      </div>
+
+      <div style="background:var(--bg);border-radius:12px;padding:18px;margin-bottom:20px;border:1px solid var(--border);">
+        <p style="font-weight:700;color:var(--primary-dark);margin-bottom:14px;">📏 Measurements (in inches)</p>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Chest</label>
+            <input type="text" id="m_chest" placeholder='e.g. 36"' />
+          </div>
+          <div class="form-group">
+            <label>Waist</label>
+            <input type="text" id="m_waist" placeholder='e.g. 30"' />
+          </div>
+        </div>
+        <div class="form-row" id="women-fields-1">
+          <div class="form-group">
+            <label>Hip</label>
+            <input type="text" id="m_hip" placeholder='e.g. 38"' />
+          </div>
+          <div class="form-group">
+            <label>Shoulder</label>
+            <input type="text" id="m_shoulder" placeholder='e.g. 14"' />
+          </div>
+        </div>
+        <div class="form-row" id="men-fields-1" style="display:none;">
+          <div class="form-group">
+            <label>Shoulder</label>
+            <input type="text" id="m_shoulder_men" placeholder='e.g. 17"' />
+          </div>
+          <div class="form-group">
+            <label>Collar</label>
+            <input type="text" id="m_collar" placeholder='e.g. 16"' />
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Sleeve Length</label>
+            <input type="text" id="m_sleeve" placeholder='e.g. 22"' />
+          </div>
+          <div class="form-group">
+            <label>Total Length</label>
+            <input type="text" id="m_length" placeholder='e.g. 42"' />
+          </div>
+        </div>
+        <div class="form-row" id="women-fields-2">
+          <div class="form-group">
+            <label>Neck</label>
+            <input type="text" id="m_neck" placeholder='e.g. 14"' />
+          </div>
+          <div class="form-group">
+            <label>Other Notes</label>
+            <input type="text" id="m_other" placeholder="Any other measurement" />
+          </div>
+        </div>
+        <div class="form-row" id="men-fields-2" style="display:none;">
+          <div class="form-group">
+            <label>Bicep</label>
+            <input type="text" id="m_bicep" placeholder='e.g. 13"' />
+          </div>
+          <div class="form-group">
+            <label>Inseam (for trousers)</label>
+            <input type="text" id="m_inseam" placeholder='e.g. 30"' />
+          </div>
+        </div>
+        <div class="form-row" id="men-fields-3" style="display:none;">
+          <div class="form-group">
+            <label>Other Notes</label>
+            <input type="text" id="m_other_men" placeholder="Any other measurement" />
+          </div>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label>Special Instructions</label>
+        <textarea id="specialInstructions" placeholder="Any special requirements, patterns, embellishments..." style="min-height:70px;"></textarea>
+      </div>
+
+
+
+      <button class="btn btn-primary btn-full" onclick="placeOrder()" id="orderBtn">Place Order ✂️</button>
+    </div>
+  </div>
+
+  <!-- Tab: My Orders -->
+  <div class="tab-content" id="tab-my-orders">
+    <div id="ordersLoading" style="text-align:center;padding:40px;color:var(--muted);">Loading orders...</div>
+    <div id="ordersList"></div>
+    <div id="noOrders" style="display:none;text-align:center;padding:60px 20px;">
+      <div style="font-size:3rem;margin-bottom:12px;">📦</div>
+      <p style="color:var(--muted);font-size:1rem;">No orders yet. Place your first order!</p>
+      <button class="btn btn-primary" style="margin-top:16px;" onclick="switchTab('new-order')">Place an Order</button>
+    </div>
+  </div>
+
+  <!-- Tab: Profile -->
+  <div class="tab-content" id="tab-profile">
+    <div class="card" style="max-width:500px;">
+      <h3 style="font-size:1.1rem;font-weight:800;color:var(--primary-dark);margin-bottom:20px;">👤 My Profile</h3>
+      <div id="profileInfo" style="font-size:0.92rem;line-height:2.2;color:var(--text);"></div>
+    </div>
+  </div>
+
+</div>
+
+<!-- Loading screen -->
+<div id="loadingScreen" style="display:flex;align-items:center;justify-content:center;min-height:100vh;">
+  <div style="text-align:center;">
+    <div style="font-size:3rem;margin-bottom:12px;">✂️</div>
+    <p style="color:var(--muted);">Loading your dashboard...</p>
+  </div>
+</div>
+
+<!-- Order Detail Modal -->
+<div class="modal-overlay" id="orderModal">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title">Order Details</span>
+      <button class="modal-close" onclick="closeOrderModal()">✕</button>
+    </div>
+    <div id="orderModalContent"></div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<!-- Remaining Payment Modal -->
+<div class="modal-overlay" id="remainingPayModal" onclick="if(event.target===this)closeRemainingPayModal()">
+  <div class="modal" style="max-width:420px;">
+    <div class="modal-header" style="background:linear-gradient(135deg,#2980b9,#1a5276);color:#fff;border-radius:12px 12px 0 0;">
+      <span class="modal-title" style="color:#fff;">💳 Pay Remaining Balance</span>
+      <button class="modal-close" onclick="closeRemainingPayModal()" style="color:#fff;background:transparent;border:none;font-size:1.3rem;cursor:pointer;">✕</button>
+    </div>
+    <div style="padding:20px;">
+      <p style="text-align:center;color:var(--muted);font-size:0.88rem;margin-bottom:14px;">Your order is ready! Pay the remaining balance to complete delivery.</p>
+      <div style="text-align:center;margin-bottom:6px;">
+        <span style="font-size:2rem;font-weight:800;color:#2980b9;">₹<span id="remAmount">0</span></span>
+        <span style="color:var(--muted);font-size:0.85rem;"> remaining</span>
+      </div>
+      <div style="text-align:center;margin:14px 0;">
+        <img id="remQr" src="" alt="Payment QR" style="width:180px;height:180px;border-radius:10px;border:2px solid var(--border);"/>
+      </div>
+      <p style="text-align:center;font-weight:700;color:#2980b9;margin-bottom:16px;" id="remUpiId">9989336847@ybl</p>
+      <div class="form-group">
+        <label>UPI Transaction ID (UTR) *</label>
+        <input id="remUtr" placeholder="Enter UTR after payment" style="font-size:1rem;"/>
+      </div>
+      <button class="btn btn-primary btn-full" onclick="submitRemainingPayment()" id="remConfirmBtn" style="margin-top:6px;background:#2980b9;">Submit Payment ✓</button>
+      <p id="remErr" style="color:#e74c3c;font-size:0.82rem;margin-top:8px;text-align:center;"></p>
+    </div>
+  </div>
+</div>
+
+<!-- Advance Payment Modal -->
+<div class="modal-overlay" id="paymentModal" onclick="if(event.target===this)closePaymentModal()">
+  <div class="modal" style="max-width:420px;">
+    <div class="modal-header" style="background:linear-gradient(135deg,var(--primary),var(--primary-dark));color:#fff;border-radius:12px 12px 0 0;">
+      <span class="modal-title" style="color:#fff;">💳 Advance Payment</span>
+      <button class="modal-close" onclick="closePaymentModal()" style="color:#fff;background:transparent;border:none;font-size:1.3rem;cursor:pointer;">✕</button>
+    </div>
+    <div style="padding:20px;">
+      <p style="text-align:center;color:var(--muted);font-size:0.88rem;margin-bottom:14px;">Pay the advance amount to confirm your order</p>
+      <div style="text-align:center;margin-bottom:6px;">
+        <span style="font-size:2rem;font-weight:800;color:var(--primary);">₹<span id="pmtAmount">999</span></span>
+        <span style="color:var(--muted);font-size:0.85rem;"> advance</span>
+      </div>
+      <div style="text-align:center;margin:14px 0;">
+        <img id="pmtQr" src="" alt="Payment QR" style="width:180px;height:180px;border-radius:10px;border:2px solid var(--border);"/>
+      </div>
+      <p style="text-align:center;font-weight:700;color:var(--primary-dark);margin-bottom:16px;" id="pmtUpiId">9989336847@ybl</p>
+      <div class="form-group">
+        <label>UPI Transaction ID (UTR) *</label>
+        <input id="pmtUtr" placeholder="Enter UTR after payment" style="font-size:1rem;"/>
+        <p style="font-size:0.78rem;color:var(--muted);margin-top:4px;">Found in your UPI app under transaction details</p>
+      </div>
+      <button class="btn btn-primary btn-full" onclick="confirmPaymentAndOrder()" id="pmtConfirmBtn" style="margin-top:6px;">Confirm Payment & Place Order ✂️</button>
+      <p id="pmtErr" style="color:#e74c3c;font-size:0.82rem;margin-top:8px;text-align:center;"></p>
+    </div>
+  </div>
+</div>
+
+<script>
+const API = '';
+let token = localStorage.getItem('janoos_token');
+let user = JSON.parse(localStorage.getItem('janoos_user') || 'null');
+let uploadedImageUrls = [];
+let selectedFiles = [];
+
+const STEPS = ['Received','Measuring','Cutting','Stitching','Quality Check','Ready','Delivered'];
+
+if (!token) window.location.href = '/';
+
+function showToast(msg, type='') {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.className = 'toast show ' + type;
+  setTimeout(() => t.className='toast', 3500);
+}
+
+function authHeaders() { return { 'Content-Type':'application/json', 'Authorization':'Bearer '+token }; }
+
+async function loadProfile() {
+  try {
+    const res = await fetch('/api/me', { headers: authHeaders() });
+    if (res.status === 401) { logout(); return; }
+    const u = await res.json();
+    user = u;
+    const avatarEl = document.getElementById('userAvatar');
+    if (u.profileImage) avatarEl.innerHTML = `<img src="${u.profileImage}" alt="avatar"/>`;
+    else avatarEl.textContent = u.name.charAt(0).toUpperCase();
+    document.getElementById('welcomeName').textContent = 'Welcome, ' + u.name + '!';
+    document.getElementById('welcomeSub').textContent = 'User ID: ' + u.userId + ' | ' + u.mobile;
+    const badges = { pending: '🕐 Payment Pending Verification', verified: '✅ Payment Verified', rejected: '❌ Payment Rejected' };
+    const badgeClasses = { pending: 'pending', verified: 'verified', rejected: 'rejected' };
+    document.getElementById('paymentBadge').innerHTML = `<span class="payment-badge ${badgeClasses[u.paymentStatus]}">${badges[u.paymentStatus]}</span>`;
+    document.getElementById('profileInfo').innerHTML = `
+      <p><b>Name:</b> ${u.name}</p>
+      <p><b>User ID:</b> ${u.userId}</p>
+      <p><b>Mobile:</b> ${u.mobile}</p>
+      <p><b>Email:</b> ${u.email || '—'}</p>
+      <p><b>Address:</b> ${u.address || '—'}</p>
+      <p><b>Payment Status:</b> <span class="badge badge-${u.paymentStatus}">${u.paymentStatus}</span></p>
+      <p><b>Member Since:</b> ${new Date(u.regDate).toLocaleDateString('en-IN')}</p>
+    `;
+    document.getElementById('loadingScreen').style.display = 'none';
+    document.getElementById('dashboardMain').style.display = 'block';
+    populateCategoryOptions();
+    prefillMeasurements();
+  } catch(e) { showToast('Error loading profile', 'error'); }
+}
+
+function prefillMeasurements() {
+  const m = user && user.measurements;
+  if (!m) return;
+  const map = {
+    m_chest: m.chest, m_waist: m.waist, m_hip: m.hip,
+    m_shoulder: m.shoulder, m_shoulder_men: m.shoulder, m_collar: m.collar,
+    m_sleeve: m.sleeveLength, m_length: m.length, m_neck: m.neck,
+    m_other: m.other, m_bicep: m.bicep, m_inseam: m.inseam, m_other_men: m.other,
+  };
+  Object.entries(map).forEach(([id, val]) => {
+    if (val) document.getElementById(id).value = val;
+  });
+}
+
+function switchTab(tab) {
+  document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.dash-tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('tab-' + tab).classList.add('active');
+  const idx = ['new-order','my-orders','profile'].indexOf(tab);
+  document.querySelectorAll('.dash-tab')[idx].classList.add('active');
+  if (tab === 'my-orders')     loadOrders();
+}
+
+const CATEGORIES_BY_GENDER = {
+  Women: ['Blouse', 'Salwar Kameez', 'Lehenga', 'Kurti', 'Saree Blouse', 'Churidar', 'Anarkali', 'Other'],
+  Men: ['Shirt', 'Kurta Pyjama', 'Trousers', 'Other'],
+};
+
+function populateCategoryOptions() {
+  const gender = document.getElementById('gender').value;
+  const select = document.getElementById('category');
+  const prev = select.value;
+  select.innerHTML = '<option value="">— Select Category —</option>' +
+    CATEGORIES_BY_GENDER[gender].map(c => `<option>${c}</option>`).join('');
+  if (CATEGORIES_BY_GENDER[gender].includes(prev)) select.value = prev;
+  loadOrderStyleVideos();
+}
+
+function onGenderChange() {
+  const isMen = document.getElementById('gender').value === 'Men';
+  document.getElementById('women-fields-1').style.display = isMen ? 'none' : '';
+  document.getElementById('women-fields-2').style.display = isMen ? 'none' : '';
+  document.getElementById('men-fields-1').style.display = isMen ? '' : 'none';
+  document.getElementById('men-fields-2').style.display = isMen ? '' : 'none';
+  document.getElementById('men-fields-3').style.display = isMen ? '' : 'none';
+  populateCategoryOptions();
+}
+
+function previewImages(e) {
+  const files = Array.from(e.target.files).slice(0, 5);
+  selectedFiles = files;
+  const preview = document.getElementById('uploadPreview');
+  preview.innerHTML = '';
+  files.forEach((f, i) => {
+    const reader = new FileReader();
+    reader.onload = ev => {
+      preview.innerHTML += `<div class="prev-img">
+        <img src="${ev.target.result}" />
+        <button class="remove-img" onclick="removeImage(${i})">✕</button>
+      </div>`;
+    };
+    reader.readAsDataURL(f);
+  });
+}
+
+function removeImage(i) {
+  selectedFiles.splice(i, 1);
+  const dt = new DataTransfer();
+  selectedFiles.forEach(f => dt.items.add(f));
+  document.getElementById('imageInput').files = dt.files;
+  previewImages({ target: document.getElementById('imageInput') });
+}
+
+async function uploadImages() {
+  if (!selectedFiles.length) return [];
+  const formData = new FormData();
+  selectedFiles.forEach(f => formData.append('images', f));
+  const res = await fetch('/api/upload?folder=janoos/orders', { method:'POST', body: formData });
+  const data = await res.json();
+  return data.urls || [];
+}
+
+let pendingOrderPayload = null;
+let orderAdvanceAmount = 999;
+
+async function placeOrder() {
+  if (!user || user.paymentStatus !== 'verified') {
+    return showToast('Your payment must be verified before placing orders. Please wait for admin approval.', 'error');
+  }
+  const category = document.getElementById('category').value;
+  const description = document.getElementById('description').value.trim();
+  const gender = document.getElementById('gender').value;
+  if (!category) return showToast('Please select a dress category', 'error');
+  if (!description) return showToast('Please describe your design', 'error');
+
+  const btn = document.getElementById('orderBtn');
+  btn.disabled = true; btn.textContent = 'Uploading images...';
+
+  try {
+    const imageUrls = await uploadImages();
+    const measurements = gender === 'Men' ? {
+      chest: document.getElementById('m_chest').value,
+      waist: document.getElementById('m_waist').value,
+      shoulder: document.getElementById('m_shoulder_men').value,
+      collar: document.getElementById('m_collar').value,
+      sleeveLength: document.getElementById('m_sleeve').value,
+      length: document.getElementById('m_length').value,
+      bicep: document.getElementById('m_bicep').value,
+      inseam: document.getElementById('m_inseam').value,
+      other: document.getElementById('m_other_men').value,
+    } : {
+      chest: document.getElementById('m_chest').value,
+      waist: document.getElementById('m_waist').value,
+      hip: document.getElementById('m_hip').value,
+      shoulder: document.getElementById('m_shoulder').value,
+      sleeveLength: document.getElementById('m_sleeve').value,
+      length: document.getElementById('m_length').value,
+      neck: document.getElementById('m_neck').value,
+      other: document.getElementById('m_other').value,
+    };
+    pendingOrderPayload = {
+      category, description, gender,
+      designerId: document.getElementById('designer').value || null,
+      urgency: document.getElementById('urgency').value,
+      fabric: document.getElementById('fabric').value,
+      colour: document.getElementById('colour').value,
+      specialInstructions: document.getElementById('specialInstructions').value,
+      shopVideoUrl: document.getElementById('shopVideoUrl').value,
+      designerStyleVideoUrl: document.getElementById('designerStyleVideoUrl').value,
+      customerStyleVideoUrl: document.getElementById('customerStyleVideoUrl').value.trim(),
+      movieStyleVideoUrl: document.getElementById('movieStyleVideoUrl').value.trim(),
+      referenceImages: imageUrls,
+      measurements
+    };
+    openPaymentModal();
+  } catch(e) {
+    showToast('Error uploading images', 'error');
+  } finally {
+    btn.disabled = false; btn.textContent = 'Place Order ✂️';
+  }
+}
+
+async function openPaymentModal() {
+  document.getElementById('pmtUtr').value = '';
+  document.getElementById('pmtErr').textContent = '';
+  try {
+    const r = await fetch('/api/settings/order-payment');
+    const s = await r.json();
+    orderAdvanceAmount = s.advanceAmount || 999;
+    const upiId = s.upiId || '9989336847@ybl';
+    const payeeName = encodeURIComponent(s.payeeName || 'Janoos');
+    document.getElementById('pmtAmount').textContent = orderAdvanceAmount;
+    document.getElementById('pmtUpiId').textContent = upiId;
+    const qrData = `upi://pay?pa=${upiId}&pn=${payeeName}&am=${orderAdvanceAmount}&cu=INR`;
+    document.getElementById('pmtQr').src = `https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(qrData)}`;
+  } catch(e) {
+    document.getElementById('pmtAmount').textContent = orderAdvanceAmount;
+  }
+  document.getElementById('paymentModal').classList.add('open');
+}
+
+function closePaymentModal() {
+  document.getElementById('paymentModal').classList.remove('open');
+}
+
+async function confirmPaymentAndOrder() {
+  const utr = document.getElementById('pmtUtr').value.trim();
+  if (!utr) { document.getElementById('pmtErr').textContent = 'Please enter your UTR number.'; return; }
+  const btn = document.getElementById('pmtConfirmBtn');
+  btn.disabled = true; btn.textContent = 'Placing order...';
+  document.getElementById('pmtErr').textContent = '';
+  try {
+    const payload = { ...pendingOrderPayload, advanceUtr: utr, advanceAmount: orderAdvanceAmount };
+    const res = await fetch('/api/orders', { method:'POST', headers: authHeaders(), body: JSON.stringify(payload) });
+    const data = await res.json();
+    if (!res.ok) { document.getElementById('pmtErr').textContent = data.error; return; }
+    closePaymentModal();
+    showToast('Order placed successfully! 🎉', 'success');
+    document.getElementById('description').value = '';
+    document.getElementById('category').value = '';
+    document.getElementById('designer').value = '';
+    document.getElementById('designerContactBox').style.display = 'none';
+    document.getElementById('fabric').value = '';
+    document.getElementById('colour').value = '';
+    document.getElementById('specialInstructions').value = '';
+    document.getElementById('customerStyleVideoUrl').value = '';
+    document.getElementById('movieStyleVideoUrl').value = '';
+    document.getElementById('shopVideoUrl').value = '';
+    document.getElementById('shopVideoLink').style.display = 'none';
+    document.getElementById('designerStyleVideoUrl').value = '';
+    document.getElementById('orderVideosSection').style.display = 'none';
+    document.getElementById('uploadPreview').innerHTML = '';
+    selectedFiles = []; pendingOrderPayload = null;
+    setTimeout(() => switchTab('my-orders'), 1000);
+  } catch(e) {
+    document.getElementById('pmtErr').textContent = 'Error placing order. Try again.';
+  } finally {
+    btn.disabled = false; btn.textContent = 'Confirm Payment & Place Order ✂️';
+  }
+}
+
+let remainingOrderId = null;
+
+async function openRemainingPayment(orderId, amount) {
+  remainingOrderId = orderId;
+  document.getElementById('remUtr').value = '';
+  document.getElementById('remErr').textContent = '';
+  document.getElementById('remAmount').textContent = amount;
+  try {
+    const r = await fetch('/api/settings/order-payment');
+    const s = await r.json();
+    const upiId = s.upiId || '9989336847@ybl';
+    const payeeName = encodeURIComponent(s.payeeName || 'Janoos');
+    document.getElementById('remUpiId').textContent = upiId;
+    const qrData = `upi://pay?pa=${upiId}&pn=${payeeName}&am=${amount}&cu=INR`;
+    document.getElementById('remQr').src = `https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(qrData)}`;
+  } catch(e) {}
+  document.getElementById('remainingPayModal').classList.add('open');
+}
+
+function closeRemainingPayModal() {
+  document.getElementById('remainingPayModal').classList.remove('open');
+}
+
+async function submitRemainingPayment() {
+  const utr = document.getElementById('remUtr').value.trim();
+  if (!utr) { document.getElementById('remErr').textContent = 'Please enter your UTR number.'; return; }
+  const btn = document.getElementById('remConfirmBtn');
+  btn.disabled = true; btn.textContent = 'Submitting...';
+  document.getElementById('remErr').textContent = '';
+  try {
+    const res = await fetch(`/api/orders/${remainingOrderId}/remaining-payment`, {
+      method: 'POST', headers: authHeaders(), body: JSON.stringify({ remainingUtr: utr })
+    });
+    const data = await res.json();
+    if (!res.ok) { document.getElementById('remErr').textContent = data.error; return; }
+    closeRemainingPayModal();
+    showToast('Remaining payment submitted! Admin will verify shortly.', 'success');
+    loadOrders();
+  } catch(e) {
+    document.getElementById('remErr').textContent = 'Error submitting. Try again.';
+  } finally {
+    btn.disabled = false; btn.textContent = 'Submit Payment ✓';
+  }
+}
+
+async function loadOrders() {
+  document.getElementById('ordersLoading').style.display = 'block';
+  document.getElementById('ordersList').innerHTML = '';
+  document.getElementById('noOrders').style.display = 'none';
+  try {
+    const res = await fetch('/api/orders/my', { headers: authHeaders() });
+    const orders = await res.json();
+    document.getElementById('ordersLoading').style.display = 'none';
+    if (!orders.length) { document.getElementById('noOrders').style.display = 'block'; return; }
+    document.getElementById('ordersList').innerHTML = orders.map(o => {
+      const stepIdx = STEPS.indexOf(o.status);
+      const stepsHtml = STEPS.map((s, i) => `
+        <div class="step ${i < stepIdx ? 'done' : i === stepIdx ? 'active' : ''}">
+          <div class="step-dot">${i < stepIdx ? '✓' : i+1}</div>
+          <div class="step-label">${s}</div>
+        </div>
+        ${i < STEPS.length-1 ? `<div class="step-line ${i < stepIdx ? 'done' : ''}"></div>` : ''}
+      `).join('');
+      const imgs = (o.referenceImages||[]).slice(0,3).map(u => `<img src="${u}" onclick="openOrderModal('${o.orderId}')" />`).join('');
+      return `<div class="order-card">
+        <div class="order-card-header">
+          <div>
+            <div class="order-id">${o.orderId}</div>
+            <div class="order-meta">
+              <span>📅 ${new Date(o.createdAt).toLocaleDateString('en-IN')}</span>
+              <span>👗 ${o.category}</span>
+              <span>⏱ ${o.urgency}</span>
+              ${o.price ? `<span>💰 ₹${o.price}</span>` : ''}
+            </div>
+          </div>
+          <span class="order-status status-${o.status.replace(' ','')}">${o.status}</span>
+        </div>
+        <div class="progress-steps">${stepsHtml}</div>
+        ${imgs ? `<div class="order-images">${imgs}</div>` : ''}
+        <p style="font-size:0.88rem;color:var(--muted);margin-top:10px;">${o.description.slice(0,100)}${o.description.length>100?'...':''}</p>
+        ${o.estimatedDelivery ? `<p style="font-size:0.82rem;color:var(--success);margin-top:6px;">📦 Est. Delivery: ${new Date(o.estimatedDelivery).toLocaleDateString('en-IN')}</p>` : ''}
+        <div style="margin-top:10px;padding:10px;background:#fdf8ff;border-radius:8px;border:1px solid var(--border);font-size:0.83rem;">
+          <span style="margin-right:14px;">💳 Advance ₹${o.advanceAmount||0}: <b style="color:${o.advanceStatus==='verified'?'green':o.advanceStatus==='rejected'?'red':'orange'}">${(o.advanceStatus||'pending').toUpperCase()}</b></span>
+          ${o.price ? `<span>Balance ₹${Math.max(0,(o.price||0)-(o.advanceAmount||0))}: <b style="color:${o.remainingStatus==='verified'?'green':o.remainingStatus==='rejected'?'red':o.remainingStatus==='not_required'?'#888':'orange'}">${(o.remainingStatus||'—').replace('_',' ').toUpperCase()}</b></span>` : ''}
+          ${o.status==='Ready' && o.remainingStatus==='not_required' ? `<div style="margin-top:8px;"><button class="btn btn-primary btn-sm" onclick="openRemainingPayment('${o.orderId}',${Math.max(0,(o.price||0)-(o.advanceAmount||0))})">💳 Pay Remaining ₹${Math.max(0,(o.price||0)-(o.advanceAmount||0))}</button></div>` : ''}
+          ${o.status==='Ready' && o.remainingStatus==='pending' ? `<div style="margin-top:6px;color:orange;font-size:0.8rem;">⏳ Remaining payment submitted — awaiting admin verification</div>` : ''}
+          ${o.status==='Ready' && o.remainingStatus==='rejected' ? `<div style="margin-top:8px;"><button class="btn btn-primary btn-sm" onclick="openRemainingPayment('${o.orderId}',${Math.max(0,(o.price||0)-(o.advanceAmount||0))})">💳 Re-submit Remaining Payment</button></div>` : ''}
+        </div>
+      </div>`;
+    }).join('');
+  } catch(e) {
+    document.getElementById('ordersLoading').style.display = 'none';
+    showToast('Error loading orders', 'error');
+  }
+}
+
+async function openOrderModal(orderId) {
+  try {
+    const res = await fetch(`/api/orders/${orderId}`, { headers: authHeaders() });
+    const o = await res.json();
+    const m = o.measurements || {};
+    document.getElementById('orderModalContent').innerHTML = `
+      <p><b>Order ID:</b> ${o.orderId}</p>
+      <p><b>Gender:</b> ${o.gender||'—'}</p>
+      <p><b>Category:</b> ${o.category}</p>
+      <p><b>Status:</b> <span class="order-status status-${o.status.replace(' ','')}">${o.status}</span></p>
+      <p><b>Description:</b> ${o.description}</p>
+      <p><b>Fabric:</b> ${o.fabric||'—'} | <b>Colour:</b> ${o.colour||'—'}</p>
+      <p><b>Urgency:</b> ${o.urgency}</p>
+      ${o.price ? `<p><b>Price:</b> ₹${o.price}</p>` : ''}
+      ${o.estimatedDelivery ? `<p><b>Est. Delivery:</b> ${new Date(o.estimatedDelivery).toLocaleDateString('en-IN')}</p>` : ''}
+      <hr style="margin:16px 0;border-color:var(--border);" />
+      <b>Measurements:</b>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px;font-size:0.88rem;">
+        ${Object.entries(m).filter(([k,v])=>v).map(([k,v])=>`<p><b>${k}:</b> ${v}</p>`).join('')}
+      </div>
+      ${(o.referenceImages||[]).length ? `<hr style="margin:16px 0;border-color:var(--border);" /><b>Reference Images:</b><div class="order-images" style="margin-top:8px;">${o.referenceImages.map(u=>`<img src="${u}" style="width:80px;height:80px;" />`).join('')}</div>` : ''}
+      ${o.shopVideoUrl ? `<p style="margin-top:12px;"><b>Shop Video:</b> <a href="${o.shopVideoUrl}" target="_blank" style="color:var(--primary);">${o.shopVideoUrl}</a></p>` : ''}
+      ${o.designerStyleVideoUrl ? `<p style="margin-top:8px;"><b>Designer Style Video:</b> <a href="${o.designerStyleVideoUrl}" target="_blank" style="color:var(--primary);">${o.designerStyleVideoUrl}</a></p>` : ''}
+      ${o.customerStyleVideoUrl ? `<p style="margin-top:8px;"><b>Your Style Video:</b> <a href="${o.customerStyleVideoUrl}" target="_blank" style="color:var(--primary);">${o.customerStyleVideoUrl}</a></p>` : ''}
+      ${o.movieStyleVideoUrl ? `<p style="margin-top:8px;"><b>Movie Style Video:</b> <a href="${o.movieStyleVideoUrl}" target="_blank" style="color:var(--primary);">${o.movieStyleVideoUrl}</a></p>` : ''}
+      ${o.specialInstructions ? `<p style="margin-top:12px;"><b>Special Instructions:</b> ${o.specialInstructions}</p>` : ''}
+    `;
+    document.getElementById('orderModal').classList.add('open');
+  } catch(e) { showToast('Error loading order', 'error'); }
+}
+
+function closeOrderModal() { document.getElementById('orderModal').classList.remove('open'); }
+
+function logout() {
+  localStorage.removeItem('janoos_token');
+  localStorage.removeItem('janoos_user');
+  window.location.href = '/';
+}
+
+loadProfile();
+loadDesignerOptions();
+loadShopVideos();
+
+function onShopVideoChange() {
+  const url = document.getElementById('shopVideoUrl').value;
+  const linkDiv = document.getElementById('shopVideoLink');
+  const anchor = document.getElementById('shopVideoAnchor');
+  if (url) {
+    anchor.href = url;
+    anchor.textContent = '▶ Watch Video: ' + url;
+    linkDiv.style.display = 'block';
+  } else {
+    linkDiv.style.display = 'none';
+  }
+}
+
+async function loadShopVideos() {
+  try {
+    const res = await fetch('/api/shop-videos');
+    const d = await res.json();
+    const sel = document.getElementById('shopVideoUrl');
+    (d.data || []).forEach(v => {
+      const opt = document.createElement('option');
+      opt.value = v.videoUrl;
+      opt.textContent = v.title;
+      sel.appendChild(opt);
+    });
+  } catch(e) {}
+}
+
+// ── Style Videos (filtered by selected category) ──────────────────────────────
+let dashAllVideos = [];
+let dashVideosLoaded = false;
+
+let allDesigners = [];
+
+async function loadDesignerOptions() {
+  try {
+    const r = await fetch('/api/designers');
+    const d = await r.json();
+    allDesigners = d.data || [];
+    const sel = document.getElementById('designer');
+    allDesigners.forEach(des => {
+      const opt = document.createElement('option');
+      opt.value = des._id;
+      opt.textContent = des.city ? `${des.name} (${des.city})` : des.name;
+      sel.appendChild(opt);
+    });
+  } catch(e) {}
+}
+
+function onDesignerChange() {
+  const designerId = document.getElementById('designer').value;
+  const box = document.getElementById('designerContactBox');
+  const des = allDesigners.find(d => d._id === designerId);
+  if (!des) { box.style.display = 'none'; return; }
+  box.style.display = 'flex';
+  const waNumber = (des.mobile || '').replace(/\D/g, '');
+  document.getElementById('designerContactInfo').innerHTML =
+    `📞 ${des.mobile || 'Mobile not available'}` +
+    (waNumber ? ` &nbsp;|&nbsp; <a href="https://wa.me/91${waNumber}" target="_blank" style="color:var(--primary);font-weight:600;">💬 Chat on WhatsApp</a>` : '');
+  loadOrderStyleVideos();
+}
+
+async function loadOrderStyleVideos() {
+  const gender = document.getElementById('gender').value;
+  const category = document.getElementById('category').value;
+  const designerId = document.getElementById('designer').value;
+  const section = document.getElementById('orderVideosSection');
+  if (!category) { section.style.display = 'none'; return; }
+
+  if (!dashVideosLoaded) {
+    try {
+      const r = await fetch('/api/videos');
+      const d = await r.json();
+      dashAllVideos = d.data || [];
+      dashVideosLoaded = true;
+    } catch(e) { dashAllVideos = []; }
+  }
+
+  const matches = dashAllVideos.filter(v =>
+    v.category === category &&
+    (v.gender || 'Women') === gender &&
+    (!designerId || v.designerId === designerId)
+  );
+  if (!matches.length) { section.style.display = 'none'; return; }
+  section.style.display = 'block';
+  renderOrderVideos(matches);
+}
+
+function renderOrderVideos(videos) {
+  const grid = document.getElementById('orderVideosGrid');
+  const selected = document.getElementById('designerStyleVideoUrl').value;
+  grid.style.display = 'flex';
+  grid.style.flexDirection = 'column';
+  grid.style.gap = '8px';
+  grid.innerHTML = videos.map(v => {
+    const isSelected = v.videoUrl === selected;
+    return `
+      <div style="display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:10px;background:#fff;border:1.5px solid ${isSelected?'var(--primary)':'var(--border)'};flex-wrap:wrap;">
+        <span style="font-weight:700;font-size:.85rem;flex-shrink:0;">${v.title}:</span>
+        <a href="${v.videoUrl}" target="_blank" style="color:var(--primary);font-size:.85rem;word-break:break-all;flex:1;">${v.videoUrl}</a>
+        <button type="button" class="btn btn-sm ${isSelected?'btn-primary':'btn-outline'}" style="flex-shrink:0;" onclick='selectOrderVideo(${JSON.stringify(v).replace(/"/g,"&quot;")})'>${isSelected?'✓ Selected':'Select'}</button>
+      </div>`;
+  }).join('');
+}
+
+function selectOrderVideo(v) {
+  document.getElementById('designerStyleVideoUrl').value = v.videoUrl;
+  if (v.description) {
+    const desc = document.getElementById('description');
+    if (!desc.value) desc.value = v.title + ' — ' + v.description;
+  }
+  const gender = document.getElementById('gender').value;
+  const category = document.getElementById('category').value;
+  const designerId = document.getElementById('designer').value;
+  renderOrderVideos(dashAllVideos.filter(x =>
+    x.category === category && (x.gender || 'Women') === gender && (!designerId || x.designerId === designerId)
+  ));
+  showToast(`"${v.title}" selected as reference style!`, 'success');
+}
+</script>
+</body>
+</html>

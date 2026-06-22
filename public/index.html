@@ -1,0 +1,400 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Janoos – Customised Stitching</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+<!-- Navbar -->
+<nav class="navbar">
+  <div class="logo">
+    <div style="width:38px;height:38px;border-radius:50%;background:rgba(255,255,255,0.3);display:flex;align-items:center;justify-content:center;font-size:1.3rem;border:2px solid #fff;">✂️</div>
+    <div>
+      <div class="logo-text">Janoos</div>
+      <div class="logo-sub">Customised Stitching</div>
+    </div>
+  </div>
+  <nav>
+    <a href="#features">Features</a>
+    <a href="#categories">Categories</a>
+    <a href="#browse-styles">🎬 Styles</a>
+    <button class="btn-accent" onclick="openLogin()">Login</button>
+    <a href="/register" class="btn-accent" style="border:1.5px solid rgba(255,255,255,0.3);background:rgba(255,255,255,0.15);color:#fff;">Register</a>
+  </nav>
+</nav>
+
+<!-- Hero -->
+<section class="hero">
+  <h1>✂️ Janoos Collection</h1>
+  <p>Upload your dream design — we'll stitch it to perfection, tailored just for you.</p>
+  <div class="hero-badges">
+    <span class="hero-badge">👗 Custom Stitching</span>
+    <span class="hero-badge">📸 Image-Based Orders</span>
+    <span class="hero-badge">📏 Exact Measurements</span>
+    <span class="hero-badge">🚀 Express Delivery</span>
+  </div>
+  <div class="hero-actions">
+    <a href="/register" class="btn btn-white">🌸 Join Now – ₹999</a>
+    <button class="btn btn-outline" style="color:#fff;border-color:rgba(255,255,255,0.6);" onclick="openLogin()">Login to Dashboard</button>
+  </div>
+</section>
+
+<!-- Features -->
+<section class="section" id="features">
+  <h2 class="section-title">How It Works</h2>
+  <p class="section-sub">Four simple steps from design to delivery</p>
+  <div class="features-grid">
+    <div class="feature-card">
+      <div class="feature-icon">💳</div>
+      <h3>1. Register & Pay</h3>
+      <p>Sign up with a one-time membership fee of ₹999 via UPI to unlock all features.</p>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">📸</div>
+      <h3>2. Upload Your Design</h3>
+      <p>Share reference images, describe your dream outfit, and provide measurements.</p>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">✂️</div>
+      <h3>3. We Start Stitching</h3>
+      <p>Our expert tailors craft your outfit with care. Track live status from your dashboard.</p>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">📦</div>
+      <h3>4. Delivered to You</h3>
+      <p>Your custom-stitched outfit is delivered right to your doorstep, perfectly fitted.</p>
+    </div>
+  </div>
+</section>
+
+<!-- Categories -->
+<section class="section" id="categories" style="background:#fdf0f5;">
+  <h2 class="section-title">What We Stitch</h2>
+  <p class="section-sub">From traditional to modern — we do it all</p>
+  <div class="categories-grid">
+    <div class="cat-chip">👘 Blouse</div>
+    <div class="cat-chip">👗 Salwar Kameez</div>
+    <div class="cat-chip">💃 Lehenga</div>
+    <div class="cat-chip">🌸 Kurti</div>
+    <div class="cat-chip">🥻 Saree Blouse</div>
+    <div class="cat-chip">👚 Churidar</div>
+    <div class="cat-chip">🌺 Anarkali</div>
+    <div class="cat-chip">✨ Other</div>
+  </div>
+</section>
+
+<!-- Browse Styles Videos -->
+<section class="section" id="browse-styles">
+  <h2 class="section-title">🎬 Browse Styles</h2>
+  <p class="section-sub">Watch our design videos — click "Select This Style" to order it</p>
+
+  <!-- Category filter -->
+  <div style="display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin-bottom:28px;" id="videoCatFilters">
+    <button class="cat-chip" style="cursor:pointer;border:none;" onclick="filterVideosByCategory('')">All</button>
+  </div>
+
+  <div id="videosGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:20px;">
+    <p style="text-align:center;color:#aaa;grid-column:1/-1;">Loading style videos…</p>
+  </div>
+</section>
+
+<!-- Video Modal -->
+<div class="modal-overlay" id="videoModal" style="align-items:center;justify-content:center;" onclick="if(event.target===this)closeVideoModal()">
+  <div class="modal-box" style="max-width:680px;padding:0;overflow:hidden;">
+    <div style="background:linear-gradient(135deg,#c0487a,#8b1a4a);color:#fff;padding:16px 20px;display:flex;justify-content:space-between;align-items:center;">
+      <div>
+        <div id="videoModalTitle" style="font-size:1rem;font-weight:700;"></div>
+        <div id="videoModalCat" style="font-size:.8rem;opacity:.8;margin-top:2px;"></div>
+      </div>
+      <button onclick="closeVideoModal()" style="background:rgba(255,255,255,.2);border:none;color:#fff;width:30px;height:30px;border-radius:50%;font-size:1.1rem;cursor:pointer;">×</button>
+    </div>
+    <div id="videoModalPlayer" style="background:#000;"></div>
+    <div style="padding:16px 20px;">
+      <p id="videoModalDesc" style="color:#555;font-size:.88rem;margin-bottom:14px;"></p>
+      <button class="btn btn-primary btn-full" id="videoSelectBtn" onclick="selectStyleFromVideo()">🌸 Select This Style & Order</button>
+    </div>
+  </div>
+</div>
+
+<!-- Membership -->
+<section class="section" style="text-align:center;">
+  <h2 class="section-title">One-Time Membership</h2>
+  <p class="section-sub">Pay once, place unlimited orders</p>
+  <div class="card" style="max-width:400px;margin:0 auto;border: 2px solid var(--primary);">
+    <div style="font-size:3rem;margin-bottom:12px;">🌸</div>
+    <div style="font-size:2.8rem;font-weight:900;color:var(--primary);">₹999</div>
+    <div style="color:var(--muted);margin-bottom:20px;">One-time registration fee</div>
+    <ul style="text-align:left;list-style:none;margin-bottom:24px;font-size:0.92rem;line-height:2;">
+      <li>✅ Unlimited custom orders</li>
+      <li>✅ Live order tracking</li>
+      <li>✅ Upload reference images</li>
+      <li>✅ Express stitching available</li>
+      <li>✅ Direct tailor communication</li>
+    </ul>
+    <a href="/register" class="btn btn-primary btn-full">Register Now →</a>
+  </div>
+</section>
+
+<footer>
+  <p>© 2026 Janoos Customised Stitching. All rights reserved.</p>
+  <p style="margin-top:6px;">UPI: 9989336847@ybl &nbsp;|&nbsp; Contact: support@janoos.in</p>
+</footer>
+
+<!-- Login Modal -->
+<div class="modal-overlay" id="loginModal">
+  <div class="modal" style="max-width:400px;">
+    <div class="modal-header">
+      <span class="modal-title">✂️ Login to Janoos</span>
+      <button class="modal-close" onclick="closeLogin()">✕</button>
+    </div>
+    <div class="form-group">
+      <label>Mobile Number</label>
+      <input type="tel" id="loginMobile" placeholder="Enter your mobile number" maxlength="10" />
+    </div>
+    <div class="form-group">
+      <label>Password</label>
+      <input type="password" id="loginPassword" placeholder="Enter password" />
+    </div>
+    <button class="btn btn-primary btn-full" onclick="doLogin()" id="loginBtn">Login</button>
+    <div class="auth-link">
+      Don't have an account? <a href="/register">Register here</a>
+    </div>
+    <div class="auth-link" style="margin-top:8px;">
+      <a href="#" onclick="showForgot()">Forgot password?</a>
+    </div>
+  </div>
+</div>
+
+<!-- Forgot Password Modal -->
+<div class="modal-overlay" id="forgotModal">
+  <div class="modal" style="max-width:400px;">
+    <div class="modal-header">
+      <span class="modal-title">Reset Password</span>
+      <button class="modal-close" onclick="closeForgot()">✕</button>
+    </div>
+    <div id="forgotStep1">
+      <div class="form-group">
+        <label>Mobile Number</label>
+        <input type="tel" id="forgotMobile" placeholder="Registered mobile number" maxlength="10" />
+      </div>
+      <button class="btn btn-primary btn-full" onclick="sendOtp()">Send OTP</button>
+    </div>
+    <div id="forgotStep2" style="display:none;">
+      <div class="form-group">
+        <label>OTP</label>
+        <input type="text" id="otpInput" placeholder="Enter 6-digit OTP" maxlength="6" />
+      </div>
+      <div class="form-group">
+        <label>New Password</label>
+        <input type="password" id="newPassword" placeholder="New password" />
+      </div>
+      <button class="btn btn-primary btn-full" onclick="resetPassword()">Reset Password</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const API = '';
+
+function showToast(msg, type = '') {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'toast show ' + type;
+  setTimeout(() => t.className = 'toast', 3000);
+}
+
+function openLogin() { document.getElementById('loginModal').classList.add('open'); }
+function closeLogin() { document.getElementById('loginModal').classList.remove('open'); }
+function showForgot() { closeLogin(); document.getElementById('forgotModal').classList.add('open'); }
+function closeForgot() { document.getElementById('forgotModal').classList.remove('open'); }
+
+async function doLogin() {
+  const mobile = document.getElementById('loginMobile').value.trim();
+  const password = document.getElementById('loginPassword').value;
+  if (!mobile || !password) return showToast('Please fill all fields', 'error');
+  const btn = document.getElementById('loginBtn');
+  btn.disabled = true; btn.textContent = 'Logging in...';
+  try {
+    const res = await fetch('/api/login', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ mobile, password }) });
+    const data = await res.json();
+    if (!res.ok) {
+      if (data.error === 'PAYMENT_PENDING')
+        return showToast('Payment verification in progress. It may take up to 1 hour. Contact admin on WhatsApp: +91 99893 36847', 'error');
+      return showToast(data.error, 'error');
+    }
+    localStorage.setItem('janoos_token', data.token);
+    localStorage.setItem('janoos_user', JSON.stringify(data.user));
+    showToast('Login successful!', 'success');
+    setTimeout(() => window.location.href = '/dashboard', 800);
+  } catch (e) {
+    showToast('Network error', 'error');
+  } finally {
+    btn.disabled = false; btn.textContent = 'Login';
+  }
+}
+
+async function sendOtp() {
+  const mobile = document.getElementById('forgotMobile').value.trim();
+  if (!mobile) return showToast('Enter mobile number', 'error');
+  const res = await fetch('/api/forgot-password', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ mobile }) });
+  const data = await res.json();
+  if (!res.ok) return showToast(data.error, 'error');
+  showToast('OTP sent!', 'success');
+  document.getElementById('forgotStep1').style.display = 'none';
+  document.getElementById('forgotStep2').style.display = 'block';
+}
+
+async function resetPassword() {
+  const mobile = document.getElementById('forgotMobile').value.trim();
+  const otp = document.getElementById('otpInput').value.trim();
+  const newPassword = document.getElementById('newPassword').value;
+  const res = await fetch('/api/reset-password', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ mobile, otp, newPassword }) });
+  const data = await res.json();
+  if (!res.ok) return showToast(data.error, 'error');
+  showToast('Password reset! Please login.', 'success');
+  closeForgot();
+  setTimeout(openLogin, 500);
+}
+
+// Redirect if already logged in
+if (localStorage.getItem('janoos_token')) window.location.href = '/dashboard';
+
+// ── Style Videos ──────────────────────────────────────────────────────────────
+let allVideos = [];
+let activeVideoCat = '';
+let selectedVideoCategory = '';
+
+async function loadVideos() {
+  try {
+    const r = await fetch('/api/videos');
+    const d = await r.json();
+    allVideos = d.data || [];
+    buildCategoryFilters();
+    renderVideos(allVideos);
+  } catch(e) {
+    document.getElementById('videosGrid').innerHTML = '<p style="text-align:center;color:#aaa;grid-column:1/-1;">Could not load videos.</p>';
+  }
+}
+
+function buildCategoryFilters() {
+  const cats = [...new Set(allVideos.map(v => v.category))];
+  const wrap = document.getElementById('videoCatFilters');
+  wrap.innerHTML = `<button class="cat-chip active-cat" style="cursor:pointer;border:2px solid #c0487a;color:#c0487a;" onclick="filterVideosByCategory('')">All</button>`;
+  cats.forEach(c => {
+    const btn = document.createElement('button');
+    btn.className = 'cat-chip';
+    btn.style.cssText = 'cursor:pointer;border:none;';
+    btn.textContent = c;
+    btn.onclick = () => filterVideosByCategory(c);
+    wrap.appendChild(btn);
+  });
+}
+
+function filterVideosByCategory(cat) {
+  activeVideoCat = cat;
+  document.querySelectorAll('#videoCatFilters button').forEach(btn => {
+    const isActive = (cat === '' && btn.textContent === 'All') || btn.textContent === cat;
+    btn.style.border = isActive ? '2px solid #c0487a' : 'none';
+    btn.style.color  = isActive ? '#c0487a' : '';
+    btn.style.background = isActive ? '#fdf0f5' : '';
+  });
+  renderVideos(cat ? allVideos.filter(v => v.category === cat) : allVideos);
+}
+
+function getEmbedUrl(url) {
+  // YouTube
+  const ytMatch = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([a-zA-Z0-9_-]{11})/);
+  if (ytMatch) return { type: 'iframe', src: `https://www.youtube.com/embed/${ytMatch[1]}?rel=0&autoplay=0` };
+  // YouTube Shorts
+  const ytShorts = url.match(/youtube\.com\/shorts\/([a-zA-Z0-9_-]{11})/);
+  if (ytShorts) return { type: 'iframe', src: `https://www.youtube.com/embed/${ytShorts[1]}?rel=0` };
+  // Direct video file
+  if (/\.(mp4|webm|ogg)(\?|$)/i.test(url)) return { type: 'video', src: url };
+  // Fallback: try as iframe
+  return { type: 'iframe', src: url };
+}
+
+function renderVideos(videos) {
+  const grid = document.getElementById('videosGrid');
+  if (!videos.length) {
+    grid.innerHTML = '<p style="text-align:center;color:#aaa;grid-column:1/-1;padding:40px;">No style videos available yet.</p>';
+    return;
+  }
+  grid.innerHTML = videos.map(v => {
+    const embed = getEmbedUrl(v.videoUrl);
+    const thumb = embed.type === 'iframe' && v.videoUrl.includes('youtube')
+      ? `<div style="position:relative;cursor:pointer;" onclick="openVideoModal(${JSON.stringify(v).replace(/"/g,'&quot;')})">
+           <img src="https://img.youtube.com/vi/${v.videoUrl.match(/(?:v=|youtu\.be\/)([a-zA-Z0-9_-]{11})/)?.[1]}/hqdefault.jpg" style="width:100%;height:185px;object-fit:cover;" onerror="this.style.display='none'"/>
+           <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.25);">
+             <div style="width:54px;height:54px;background:rgba(255,255,255,.9);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1.4rem;">▶</div>
+           </div>
+         </div>`
+      : `<div style="position:relative;cursor:pointer;background:#f0e0ea;height:185px;display:flex;align-items:center;justify-content:center;font-size:2rem;" onclick="openVideoModal(${JSON.stringify(v).replace(/"/g,'&quot;')})">
+           🎬<div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.08);">
+             <div style="width:54px;height:54px;background:rgba(255,255,255,.9);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1.4rem;">▶</div>
+           </div>
+         </div>`;
+    return `
+      <div style="background:#fff;border-radius:14px;overflow:hidden;box-shadow:0 2px 12px rgba(0,0,0,.08);transition:transform .2s;" onmouseenter="this.style.transform='translateY(-3px)'" onmouseleave="this.style.transform=''">
+        ${thumb}
+        <div style="padding:14px;">
+          <div style="font-size:.72rem;font-weight:700;color:#c0487a;letter-spacing:.5px;margin-bottom:4px;">${v.category.toUpperCase()}</div>
+          <div style="font-weight:700;font-size:.95rem;margin-bottom:6px;">${v.title}</div>
+          ${v.description ? `<div style="font-size:.8rem;color:#777;margin-bottom:10px;">${v.description}</div>` : ''}
+          <button class="btn btn-primary" style="width:100%;font-size:.85rem;padding:8px;" onclick="openVideoModal(${JSON.stringify(v).replace(/"/g,'&quot;')})">▶ Watch & Select Style</button>
+        </div>
+      </div>`;
+  }).join('');
+}
+
+let currentVideoData = null;
+function openVideoModal(v) {
+  currentVideoData = v;
+  document.getElementById('videoModalTitle').textContent = v.title;
+  document.getElementById('videoModalCat').textContent   = v.category;
+  document.getElementById('videoModalDesc').textContent  = v.description || '';
+  document.getElementById('videoSelectBtn').textContent  = `🌸 Select "${v.category}" Style & Order`;
+
+  const embed = getEmbedUrl(v.videoUrl);
+  const player = document.getElementById('videoModalPlayer');
+  if (embed.type === 'iframe') {
+    player.innerHTML = `<iframe src="${embed.src}" width="100%" height="340" frameborder="0" allow="accelerometer;autoplay;clipboard-write;encrypted-media;gyroscope;picture-in-picture" allowfullscreen style="display:block;"></iframe>`;
+  } else {
+    player.innerHTML = `<video src="${embed.src}" controls autoplay style="width:100%;max-height:340px;display:block;"></video>`;
+  }
+  document.getElementById('videoModal').classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+
+function closeVideoModal() {
+  document.getElementById('videoModal').classList.remove('open');
+  document.body.style.overflow = '';
+  document.getElementById('videoModalPlayer').innerHTML = ''; // stop video
+  currentVideoData = null;
+}
+
+function selectStyleFromVideo() {
+  if (!currentVideoData) return;
+  selectedVideoCategory = currentVideoData.category;
+  closeVideoModal();
+  // If logged in, redirect to dashboard with category pre-selected
+  const token = localStorage.getItem('janoos_token');
+  if (token) {
+    localStorage.setItem('janoos_preselect_category', selectedVideoCategory);
+    window.location.href = '/dashboard';
+  } else {
+    // Prompt to login/register
+    showToast(`Style selected: ${selectedVideoCategory}. Please login to place your order.`, 'success');
+    setTimeout(openLogin, 1200);
+  }
+}
+
+loadVideos();
+</script>
+</body>
+</html>
