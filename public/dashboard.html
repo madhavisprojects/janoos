@@ -17,6 +17,7 @@
     </div>
   </div>
   <nav>
+    <button onclick="openRenewSubModal()" style="background:rgba(255,255,255,0.15);color:#fff;border:1.5px solid rgba(255,255,255,0.4);padding:8px 18px;border-radius:24px;cursor:pointer;font-size:0.92rem;margin-right:10px;">💳 Renew Subscription</button>
     <button onclick="logout()" style="background:rgba(255,255,255,0.15);color:#fff;border:1.5px solid rgba(255,255,255,0.4);padding:8px 18px;border-radius:24px;cursor:pointer;font-size:0.92rem;">Logout</button>
   </nav>
 </nav>
@@ -52,6 +53,9 @@
         </select>
         <div id="shopVideoLink" style="display:none;margin-top:8px;">
           <a id="shopVideoAnchor" href="#" target="_blank" style="font-size:0.88rem;color:var(--primary);font-weight:600;word-break:break-all;">▶ Watch Video ↗</a>
+          <div style="margin-top:6px;">
+            <a id="requestLiveStreamBtn" href="#" target="_blank" style="display:none;font-size:0.85rem;color:#fff;background:#25D366;font-weight:600;padding:7px 14px;border-radius:8px;text-decoration:none;">🔴 Request Live Streaming</a>
+          </div>
         </div>
         <p style="font-size:0.8rem;color:var(--muted);margin-top:4px;">Pick a shop video that matches the style you want stitched</p>
       </div>
@@ -312,6 +316,34 @@
   </div>
 </div>
 
+<!-- Renew Subscription Modal -->
+<div class="modal-overlay" id="renewSubModal" onclick="if(event.target===this)closeRenewSubModal()">
+  <div class="modal" style="max-width:420px;">
+    <div class="modal-header" style="background:linear-gradient(135deg,var(--primary),var(--primary-dark));color:#fff;border-radius:12px 12px 0 0;">
+      <span class="modal-title" style="color:#fff;">💳 Renew Subscription</span>
+      <button class="modal-close" onclick="closeRenewSubModal()" style="color:#fff;background:transparent;border:none;font-size:1.3rem;cursor:pointer;">✕</button>
+    </div>
+    <div style="padding:20px;">
+      <p style="text-align:center;color:var(--muted);font-size:0.88rem;margin-bottom:14px;">Due date: <strong id="renewSubDue"></strong></p>
+      <div style="text-align:center;margin-bottom:6px;">
+        <span style="font-size:2rem;font-weight:800;color:var(--primary);">₹<span id="renewSubAmount">0</span></span>
+        <span style="color:var(--muted);font-size:0.85rem;"> / month</span>
+      </div>
+      <div style="text-align:center;margin:14px 0;">
+        <img id="renewSubQr" src="" alt="Payment QR" style="width:180px;height:180px;border-radius:10px;border:2px solid var(--border);"/>
+      </div>
+      <p style="text-align:center;font-weight:700;color:var(--primary-dark);margin-bottom:16px;" id="renewSubUpiId"></p>
+      <div class="form-group">
+        <label>UPI Transaction ID (UTR) *</label>
+        <input id="renewSubUtr" placeholder="Enter UTR after payment" style="font-size:1rem;"/>
+        <p style="font-size:0.78rem;color:var(--muted);margin-top:4px;">Found in your UPI app under transaction details</p>
+      </div>
+      <button class="btn btn-primary btn-full" onclick="submitRenewSub()" id="renewSubConfirmBtn" style="margin-top:6px;">Submit Payment ✓</button>
+      <p id="renewSubErr" style="color:#e74c3c;font-size:0.82rem;margin-top:8px;text-align:center;"></p>
+    </div>
+  </div>
+</div>
+
 <script>
 const API = '';
 let token = localStorage.getItem('janoos_token');
@@ -536,7 +568,11 @@ async function confirmPaymentAndOrder() {
     const payload = { ...pendingOrderPayload, advanceUtr: utr, advanceAmount: orderAdvanceAmount };
     const res = await fetch('/api/orders', { method:'POST', headers: authHeaders(), body: JSON.stringify(payload) });
     const data = await res.json();
-    if (!res.ok) { document.getElementById('pmtErr').textContent = data.error; return; }
+    if (!res.ok) {
+      if (data.code === 'SUBSCRIPTION_EXPIRED') { closePaymentModal(); openRenewSubModal(); return; }
+      document.getElementById('pmtErr').textContent = data.error;
+      return;
+    }
     closePaymentModal();
     showToast('Order placed successfully! 🎉', 'success');
     document.getElementById('description').value = '';
@@ -559,6 +595,52 @@ async function confirmPaymentAndOrder() {
     document.getElementById('pmtErr').textContent = 'Error placing order. Try again.';
   } finally {
     btn.disabled = false; btn.textContent = 'Confirm Payment & Place Order ✂️';
+  }
+}
+
+// ── Renew Subscription ──────────────────────────────
+let renewSubState = null;
+async function openRenewSubModal() {
+  document.getElementById('renewSubUtr').value = '';
+  document.getElementById('renewSubErr').textContent = '';
+  try {
+    const res = await fetch('/api/subscription', { headers: authHeaders() });
+    const data = await res.json();
+    if (!data.success) { document.getElementById('renewSubErr').textContent = data.error || 'Could not load subscription status.'; }
+    renewSubState = data;
+    document.getElementById('renewSubAmount').textContent = data.amount || 0;
+    document.getElementById('renewSubDue').textContent = data.dueDate ? new Date(data.dueDate).toLocaleDateString('en-IN') : '—';
+    const upiId = data.upi?.id || '9989336847@ybl';
+    const payeeName = encodeURIComponent(data.upi?.payeeName || 'Janoos');
+    document.getElementById('renewSubUpiId').textContent = upiId;
+    const qrData = `upi://pay?pa=${upiId}&pn=${payeeName}&am=${data.amount || ''}&cu=INR`;
+    document.getElementById('renewSubQr').src = `https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(qrData)}`;
+  } catch (e) {
+    document.getElementById('renewSubErr').textContent = 'Could not load subscription status.';
+  }
+  document.getElementById('renewSubModal').classList.add('open');
+}
+
+function closeRenewSubModal() {
+  document.getElementById('renewSubModal').classList.remove('open');
+}
+
+async function submitRenewSub() {
+  const utr = document.getElementById('renewSubUtr').value.trim();
+  if (!utr) { document.getElementById('renewSubErr').textContent = 'Please enter your UTR number.'; return; }
+  const btn = document.getElementById('renewSubConfirmBtn');
+  btn.disabled = true; btn.textContent = 'Submitting...';
+  document.getElementById('renewSubErr').textContent = '';
+  try {
+    const res = await fetch('/api/subscription/pay', { method:'POST', headers: authHeaders(), body: JSON.stringify({ utr }) });
+    const data = await res.json();
+    if (!data.success) { document.getElementById('renewSubErr').textContent = data.error; return; }
+    closeRenewSubModal();
+    showToast('Payment submitted! It will be verified shortly. 🎉', 'success');
+  } catch (e) {
+    document.getElementById('renewSubErr').textContent = 'Error submitting payment. Try again.';
+  } finally {
+    btn.disabled = false; btn.textContent = 'Submit Payment ✓';
   }
 }
 
@@ -702,15 +784,26 @@ loadDesignerOptions();
 loadShopVideos();
 
 function onShopVideoChange() {
-  const url = document.getElementById('shopVideoUrl').value;
+  const sel = document.getElementById('shopVideoUrl');
+  const url = sel.value;
   const linkDiv = document.getElementById('shopVideoLink');
   const anchor = document.getElementById('shopVideoAnchor');
+  const liveBtn = document.getElementById('requestLiveStreamBtn');
   if (url) {
     anchor.href = url;
     anchor.textContent = '▶ Watch Video: ' + url;
     linkDiv.style.display = 'block';
+    let waNumber = (sel.selectedOptions[0]?.dataset.wa || '').replace(/\D/g, '');
+    if (waNumber.length === 10) waNumber = '91' + waNumber;
+    if (waNumber) {
+      liveBtn.href = `https://wa.me/${waNumber}?text=${encodeURIComponent('Hi, I want to request a live streaming session to see your latest collection.')}`;
+      liveBtn.style.display = 'inline-block';
+    } else {
+      liveBtn.style.display = 'none';
+    }
   } else {
     linkDiv.style.display = 'none';
+    liveBtn.style.display = 'none';
   }
 }
 
@@ -723,6 +816,7 @@ async function loadShopVideos() {
       const opt = document.createElement('option');
       opt.value = v.videoUrl;
       opt.textContent = v.title;
+      opt.dataset.wa = v.shopWhatsappNo || '';
       sel.appendChild(opt);
     });
   } catch(e) {}

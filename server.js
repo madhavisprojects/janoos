@@ -10,6 +10,7 @@ const multerS3 = require("multer-s3");
 const { S3Client, DeleteObjectCommand } = require("@aws-sdk/client-s3");
 const axios = require("axios");
 const path = require("path");
+const { mountSubscriptionKit } = require("./subscription-kit");
 
 const http = require("http");
 
@@ -94,6 +95,17 @@ const userSchema = new mongoose.Schema({
   },
   regDate: { type: Date, default: Date.now },
   updatedAt: { type: Date, default: Date.now },
+  // Monthly subscription (separate from the one-time registration fee above,
+  // and separate from `isActive` which is the admin's manual deactivate toggle)
+  subscriptionAmount : { type: Number, default: () => Number(process.env.MEMBER_MONTHLY_FEE) || 0 },
+  subscriptionDue     : { type: Date, default: () => { const d = new Date(); d.setMonth(d.getMonth() + 1); return d; } },
+  subscriptionActive  : { type: Boolean, default: true },
+  subscriptionHistory : [{
+    amount:    Number,
+    dueDate:   Date,
+    note:      String,
+    changedAt: { type: Date, default: Date.now }
+  }]
 });
 
 const orderSchema = new mongoose.Schema({
@@ -236,23 +248,34 @@ function authAdmin(req, res, next) {
   next();
 }
 
+// ─── Subscription Kit — members pay a recurring monthly fee ───────────────────
+// (separate from the one-time registration fee above)
+const { requireActiveSubscription, deactivateOverdue } = mountSubscriptionKit(app, {
+  TenantModel: User,
+  tenantModelName: "JanoosUser",
+  authTenant: authUser,
+  resolveTenantId: req => ({ userId: req.user.userId }),
+  authAdmin,
+  upi: { id: process.env.PLATFORM_UPI_ID || "9989336847@ybl", payeeName: process.env.PLATFORM_UPI_NAME || "Janoos" },
+  graceDays: 3
+});
+deactivateOverdue().catch(err => console.error("Subscription sweep error:", err));
+setInterval(() => deactivateOverdue().catch(err => console.error("Subscription sweep error:", err)), 24 * 60 * 60 * 1000);
+
 // ─── OTP Store (in-memory) ────────────────────────────────────────────────────
 const otpStore = new Map();
 
 async function sendOtp(mobile, otp) {
-  try {
-    await axios.get("https://www.fast2sms.com/dev/bulkV2", {
-      params: {
-        authorization: process.env.FAST2SMS_API_KEY,
-        route: "otp",
-        variables_values: otp,
-        flash: 0,
-        numbers: mobile,
-      },
-    });
-  } catch (err) {
-    console.error("SMS error:", err.message);
-  }
+  const r = await axios.get("https://www.fast2sms.com/dev/bulkV2", {
+    params: {
+      authorization: process.env.FAST2SMS_API_KEY,
+      route: "otp",
+      variables_values: otp,
+      flash: 0,
+      numbers: mobile,
+    },
+  });
+  if (!r.data.return) throw new Error(r.data.message || "Failed to send OTP");
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -364,7 +387,7 @@ app.post("/api/reset-password", async (req, res) => {
 // ─── Orders ────────────────────────────────────────────────────────────────────
 
 // Place order
-app.post("/api/orders", authUser, async (req, res) => {
+app.post("/api/orders", authUser, requireActiveSubscription, async (req, res) => {
   try {
     const { description, category, gender, designerId, measurements, fabric, colour, urgency, specialInstructions, referenceImages, shopVideoUrl, designerStyleVideoUrl, customerStyleVideoUrl, movieStyleVideoUrl, advanceUtr, advanceAmount } = req.body;
     if (!description || !category) return res.status(400).json({ error: "Description and category are required" });
@@ -555,7 +578,7 @@ app.get("/api/admin/users/:userId", authAdmin, async (req, res) => {
 // Update user profile + measurements (admin)
 app.put("/api/admin/users/:userId/profile", authAdmin, async (req, res) => {
   try {
-    const { name, email, address, upiId, gender, measurements } = req.body;
+    const { name, email, address, upiId, gender, measurements, password } = req.body;
     const update = { updatedAt: new Date() };
     if (name !== undefined) update.name = name;
     if (email !== undefined) update.email = email;
@@ -563,6 +586,7 @@ app.put("/api/admin/users/:userId/profile", authAdmin, async (req, res) => {
     if (upiId !== undefined) update.upiId = upiId;
     if (gender !== undefined) update.gender = gender;
     if (measurements !== undefined) update.measurements = measurements;
+    if (password) update.password = await bcrypt.hash(password, 10);
     const user = await User.findOneAndUpdate({ userId: req.params.userId }, update, { new: true }).select("-password");
     if (!user) return res.status(404).json({ error: "User not found" });
     res.json({ success: true, user });
@@ -578,6 +602,28 @@ app.put("/api/admin/users/:userId/payment", authAdmin, async (req, res) => {
     if (!["verified", "rejected", "pending"].includes(status))
       return res.status(400).json({ error: "Invalid status" });
     const user = await User.findOneAndUpdate({ userId: req.params.userId }, { paymentStatus: status, updatedAt: new Date() }, { new: true }).select("-password");
+    if (!user) return res.status(404).json({ error: "User not found" });
+    res.json({ success: true, user });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Update a member's subscription amount / due date (per-member, like UrShop's per-shop pricing)
+app.patch("/api/admin/users/:userId/subscription", authAdmin, async (req, res) => {
+  try {
+    const { subscriptionAmount, subscriptionDue, note } = req.body;
+    const update = {};
+    if (subscriptionAmount !== undefined) update.subscriptionAmount = subscriptionAmount;
+    if (subscriptionDue)                  update.subscriptionDue    = new Date(subscriptionDue);
+    if (subscriptionAmount !== undefined || subscriptionDue || note) {
+      update.$push = { subscriptionHistory: {
+        amount:  subscriptionAmount,
+        dueDate: subscriptionDue ? new Date(subscriptionDue) : undefined,
+        note:    note || ""
+      } };
+    }
+    const user = await User.findOneAndUpdate({ userId: req.params.userId }, update, { new: true }).select("-password");
     if (!user) return res.status(404).json({ error: "User not found" });
     res.json({ success: true, user });
   } catch (err) {

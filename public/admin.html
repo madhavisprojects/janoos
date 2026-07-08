@@ -46,6 +46,9 @@
       <a href="#" onclick="showSection('users')" data-sec="users">
         <span class="nav-icon">👥</span> Members
       </a>
+      <a href="#" onclick="showSection('subscriptions')" data-sec="subscriptions">
+        <span class="nav-icon">💳</span> Subscription Renewals
+      </a>
       <a href="#" onclick="showSection('designers')" data-sec="designers">
         <span class="nav-icon">🧵</span> Designers
       </a>
@@ -313,6 +316,24 @@
       </div>
     </div>
 
+    <!-- ── Subscription Renewals ── -->
+    <div id="sec-subscriptions" style="display:none;">
+      <div class="admin-topbar">
+        <h1>💳 Pending Subscription Renewals</h1>
+        <button class="btn btn-primary btn-sm" onclick="loadSubscriptionPayments()">↺ Refresh</button>
+      </div>
+      <div class="card" style="padding:0;overflow:hidden;">
+        <div class="table-wrap">
+          <table>
+            <thead><tr>
+              <th>Member</th><th>Amount</th><th>Months</th><th>UPI App</th><th>UTR</th><th>Submitted</th><th>Actions</th>
+            </tr></thead>
+            <tbody id="subPaymentsTableBody"><tr><td colspan="7" style="text-align:center;padding:30px;color:var(--muted);">Loading...</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
   </main>
 </div>
 
@@ -349,6 +370,7 @@
             <select id="upGender"><option value="Women">Women</option><option value="Men">Men</option></select>
           </div>
         </div>
+        <div class="form-group"><label>Password <span style="font-size:.78rem;color:#aaa;">(leave blank to keep unchanged)</span></label><input id="upPassword" type="password" placeholder="New login password"/></div>
         <h4 style="margin:16px 0 10px;color:var(--primary-dark);">Measurements</h4>
         <div class="form-row">
           <div class="form-group"><label>Chest</label><input id="mChest"/></div>
@@ -415,6 +437,29 @@
   </div>
 </div>
 
+<!-- Update Subscription Modal -->
+<div class="modal-overlay" id="subModal">
+  <div class="modal" style="max-width:480px;">
+    <div class="modal-header">
+      <span class="modal-title">Update Subscription — <span id="subModalName"></span></span>
+      <button class="modal-close" onclick="closeSubModal()">✕</button>
+    </div>
+    <div style="padding:20px;">
+      <div class="form-row">
+        <div class="form-group"><label>Monthly Subscription Amount (₹)</label><input type="number" id="subAmount" placeholder="e.g. 149"/></div>
+        <div class="form-group"><label>Due Date</label><input type="date" id="subDue"/></div>
+      </div>
+      <div class="form-group"><label>Note <span style="font-size:.78rem;color:#aaa;">(optional)</span></label><input id="subNote" placeholder="e.g. Discount applied"/></div>
+      <div id="subHistoryWrap" style="margin-top:14px;">
+        <label style="margin-bottom:8px;display:block;">Subscription History</label>
+        <div id="subHistoryList" style="max-height:160px;overflow-y:auto;font-size:0.82rem;color:var(--muted);"></div>
+      </div>
+      <p id="subModalErr" style="color:#e74c3c;font-size:0.82rem;margin-top:8px;"></p>
+      <button class="btn btn-primary btn-full" onclick="saveSubscriptionAmount()" id="subModalSaveBtn" style="margin-top:12px;">Save Subscription</button>
+    </div>
+  </div>
+</div>
+
 <div class="toast" id="toast"></div>
 
 <script>
@@ -457,7 +502,7 @@ async function adminLogout() {
 
 // ── Navigation ─────────────────────────────────────────────────────────────────
 function showSection(sec) {
-  ['dashboard','users','videos','shopvideos','settings','designers'].forEach(s => {
+  ['dashboard','users','videos','shopvideos','settings','designers','subscriptions'].forEach(s => {
     document.getElementById('sec-'+s).style.display = s===sec ? 'block' : 'none';
   });
   if (sec === 'shopvideos') loadShopVideos();
@@ -465,9 +510,50 @@ function showSection(sec) {
   document.querySelectorAll('.admin-sidebar nav a').forEach(a => {
     a.classList.toggle('active', a.dataset.sec === sec);
   });
-  if (sec==='users')     loadUsers();
-  if (sec==='videos')    loadAdminVideos();
-  if (sec==='designers') loadDesigners();
+  if (sec==='users')         loadUsers();
+  if (sec==='videos')        loadAdminVideos();
+  if (sec==='designers')     loadDesigners();
+  if (sec==='subscriptions') loadSubscriptionPayments();
+}
+
+// ── Subscription Renewals ───────────────────────────────────────────────────────
+async function loadSubscriptionPayments() {
+  const res = await fetch('/api/admin/subscriptions?status=Pending');
+  if (res.status === 401) { adminLogout(); return; }
+  const data = await res.json();
+  const tbody = document.getElementById('subPaymentsTableBody');
+  if (!data.success) { tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:30px;color:var(--muted);">Failed to load.</td></tr>'; return; }
+  const payments = data.payments;
+  if (!payments.length) { tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:30px;color:var(--muted);">No pending renewals.</td></tr>'; return; }
+  tbody.innerHTML = payments.map(p => {
+    const memberLabel = p.tenantId ? `${p.tenantId.name}<br><span style="color:var(--muted);font-size:0.78rem;">${p.tenantId.mobile||''}</span>` : '(member deleted)';
+    const submitted = p.createdDate ? new Date(p.createdDate).toLocaleString('en-IN') : '—';
+    return `
+      <tr>
+        <td>${memberLabel}</td>
+        <td><strong>₹${(p.amount||0).toLocaleString('en-IN')}</strong></td>
+        <td>${p.monthsCovered}</td>
+        <td>${p.upiApp}</td>
+        <td>${p.utr}</td>
+        <td style="font-size:0.82rem;color:var(--muted);">${submitted}</td>
+        <td>
+          <button class="btn btn-sm" style="background:#e8f5e9;color:#2e7d32;" onclick="verifySubscriptionPayment('${p._id}','Verified')">✅ Verify</button>
+          <button class="btn btn-sm" style="background:#ffebee;color:#c62828;" onclick="verifySubscriptionPayment('${p._id}','Rejected')">❌ Reject</button>
+        </td>
+      </tr>`;
+  }).join('');
+}
+
+async function verifySubscriptionPayment(id, status) {
+  if (!confirm(`Mark this payment as ${status}?`)) return;
+  const res = await fetch(`/api/admin/subscriptions/${id}/verify`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ status }),
+  });
+  const data = await res.json();
+  if (!data.success) { alert('Update failed: ' + data.error); return; }
+  loadSubscriptionPayments();
 }
 
 // ── Stats ──────────────────────────────────────────────────────────────────────
@@ -519,11 +605,46 @@ async function loadUsers() {
           <div style="display:flex;gap:6px;flex-wrap:wrap;">
             ${u.paymentStatus!=='verified' ? `<button class="btn btn-sm" style="background:#e8f5e9;color:#2e7d32;" onclick="updatePayment('${u.userId}','verified')">✅ Verify</button>` : ''}
             ${u.paymentStatus!=='rejected' ? `<button class="btn btn-sm" style="background:#ffebee;color:#c62828;" onclick="updatePayment('${u.userId}','rejected')">❌ Reject</button>` : ''}
+            <button class="btn btn-sm" style="background:#ede7f6;color:#5e35b1;" onclick='openSubModal(${JSON.stringify({userId:u.userId,name:u.name,subscriptionAmount:u.subscriptionAmount,subscriptionDue:u.subscriptionDue,subscriptionHistory:u.subscriptionHistory}).replace(/'/g,"&apos;")})'>💳 Sub</button>
             <button class="btn btn-sm btn-danger" onclick="deleteUser('${u.userId}','${u.name}')">🗑</button>
           </div>
         </td>
       </tr>`).join('') : '<tr><td colspan="9" style="text-align:center;padding:30px;color:var(--muted);">No members found</td></tr>';
   } catch(e) { showToast('Error loading users', 'error'); }
+}
+
+// ── Update Subscription (per-member amount/due date) ────────────────────────────
+let subModalUserId = null;
+function openSubModal(u) {
+  subModalUserId = u.userId;
+  document.getElementById('subModalName').textContent = u.name;
+  document.getElementById('subAmount').value = u.subscriptionAmount || '';
+  const due = u.subscriptionDue ? new Date(u.subscriptionDue) : (() => { const d = new Date(); d.setMonth(d.getMonth()+1); return d; })();
+  document.getElementById('subDue').value = due.toISOString().slice(0,10);
+  document.getElementById('subNote').value = '';
+  document.getElementById('subModalErr').textContent = '';
+  const history = (u.subscriptionHistory || []).slice().reverse();
+  document.getElementById('subHistoryList').innerHTML = history.length
+    ? history.map(h => `<div style="padding:4px 0;border-bottom:1px solid var(--border);">₹${h.amount||0} · due ${h.dueDate ? new Date(h.dueDate).toLocaleDateString('en-IN') : '—'} ${h.note ? '· '+h.note : ''} <span style="opacity:.7;">(${new Date(h.changedAt).toLocaleDateString('en-IN')})</span></div>`).join('')
+    : '<p>No history yet.</p>';
+  document.getElementById('subModal').classList.add('open');
+}
+function closeSubModal() { document.getElementById('subModal').classList.remove('open'); }
+
+async function saveSubscriptionAmount() {
+  const subscriptionAmount = Number(document.getElementById('subAmount').value) || 0;
+  const subscriptionDue = document.getElementById('subDue').value;
+  const note = document.getElementById('subNote').value.trim();
+  const res = await fetch(`/api/admin/users/${subModalUserId}/subscription`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ subscriptionAmount, subscriptionDue: subscriptionDue || undefined, note: note || undefined })
+  });
+  const data = await res.json();
+  if (!res.ok) { document.getElementById('subModalErr').textContent = data.error; return; }
+  closeSubModal();
+  showToast('Subscription updated', 'success');
+  loadUsers();
 }
 
 async function updatePayment(userId, status) {
@@ -599,6 +720,7 @@ function toggleUserProfileEdit(show = true) {
     document.getElementById('upAddress').value = u.address || '';
     document.getElementById('upUpiId').value = u.upiId || '';
     document.getElementById('upGender').value = u.gender || 'Women';
+    document.getElementById('upPassword').value = '';
     MEASUREMENT_FIELDS.forEach(f => {
       const el = document.getElementById('m' + f.charAt(0).toUpperCase() + f.slice(1));
       if (el) el.value = m[f] || '';
@@ -620,6 +742,8 @@ async function saveUserProfile() {
     gender: document.getElementById('upGender').value,
     measurements,
   };
+  const password = document.getElementById('upPassword').value;
+  if (password) body.password = password;
   try {
     const res = await fetch(`/api/admin/users/${currentProfileUser.userId}/profile`, { method:'PUT', headers:{'Content-Type':'application/json'}, body: JSON.stringify(body) });
     const d = await res.json();
