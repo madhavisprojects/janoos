@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Admin – Janoos</title>
   <link rel="stylesheet" href="style.css" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 </head>
 <body>
 
@@ -49,6 +50,12 @@
       <a href="#" onclick="showSection('subscriptions')" data-sec="subscriptions">
         <span class="nav-icon">💳</span> Subscription Renewals
       </a>
+      <a href="#" onclick="showSection('sales')" data-sec="sales">
+        <span class="nav-icon">💰</span> Sales
+      </a>
+      <a href="#" onclick="showSection('admins')" data-sec="admins" id="navAdmins" style="display:none;">
+        <span class="nav-icon">🔑</span> Admins
+      </a>
       <a href="#" onclick="showSection('designers')" data-sec="designers">
         <span class="nav-icon">🧵</span> Designers
       </a>
@@ -87,6 +94,48 @@
       <div class="card">
         <h3 style="font-weight:700;color:var(--primary-dark);margin-bottom:14px;">📦 Orders by Status</h3>
         <div id="orderStatusChart" style="display:flex;flex-wrap:wrap;gap:10px;"></div>
+      </div>
+    </div>
+
+    <!-- ── Sales ── -->
+    <div id="sec-sales" style="display:none;">
+      <div class="admin-topbar">
+        <h1>💰 Sales</h1>
+        <button class="btn btn-primary btn-sm" onclick="loadSalesStats()">↺ Refresh</button>
+      </div>
+      <div class="stat-grid">
+        <div class="stat-card"><div class="stat-icon">🗓️</div><div class="stat-value" id="sl-today">—</div><div class="stat-label">Today's Sales</div></div>
+        <div class="stat-card"><div class="stat-icon">📆</div><div class="stat-value" id="sl-month">—</div><div class="stat-label">This Month's Sales</div></div>
+      </div>
+      <div class="card" style="margin-bottom:20px;">
+        <h3 style="font-weight:700;color:var(--primary-dark);margin-bottom:14px;">📈 Monthly Sales Trend</h3>
+        <div style="height:240px;">
+          <canvas id="salesTrendChart"></canvas>
+        </div>
+      </div>
+      <div class="card">
+        <h3 style="font-weight:700;color:var(--primary-dark);margin-bottom:14px;">🔍 Sales Between Dates</h3>
+        <div style="display:flex;gap:12px;align-items:flex-end;flex-wrap:wrap;margin-bottom:14px;">
+          <div class="form-group" style="margin-bottom:0;">
+            <label>From</label>
+            <input type="date" id="slRangeFrom"/>
+          </div>
+          <div class="form-group" style="margin-bottom:0;">
+            <label>To</label>
+            <input type="date" id="slRangeTo"/>
+          </div>
+          <button class="btn btn-primary btn-sm" onclick="loadSalesRange()">Show</button>
+        </div>
+        <div id="slRangeErr" style="color:#c62828;font-size:0.85rem;margin-bottom:10px;"></div>
+        <div id="slRangeResult" style="display:none;">
+          <div class="stat-grid">
+            <div class="stat-card"><div class="stat-value" id="sl-rangeSales">—</div><div class="stat-label">Total Sales</div></div>
+            <div class="stat-card"><div class="stat-value" id="sl-rangeOrders">—</div><div class="stat-label">Orders</div></div>
+          </div>
+          <div style="height:220px;margin-top:14px;">
+            <canvas id="salesRangeChart"></canvas>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -143,6 +192,47 @@
             <tbody id="designersTableBody"></tbody>
           </table>
           <p id="designersEmpty" style="text-align:center;color:#aaa;padding:30px;display:none;">No designers added yet.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── Admins ── -->
+    <div id="sec-admins" style="display:none;">
+      <div class="admin-topbar">
+        <h1>🔑 Admins</h1>
+        <button class="btn btn-primary btn-sm" onclick="loadAdmins()">↺ Refresh</button>
+      </div>
+
+      <div class="card" style="margin-bottom:20px;">
+        <h3 id="adminFormTitle" style="margin-bottom:14px;font-size:1rem;">Add Admin</h3>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+          <div class="form-group">
+            <label>Username *</label>
+            <input id="aUsername" placeholder="e.g. staff_priya"/>
+          </div>
+          <div class="form-group">
+            <label>Password <span id="aPasswordHint" style="font-size:.78rem;color:#aaa;">*</span></label>
+            <input id="aPassword" type="password" placeholder="Login password"/>
+          </div>
+          <div class="form-group">
+            <label>Role</label>
+            <select id="aRole"><option value="staff">Staff</option><option value="super">Super</option></select>
+          </div>
+        </div>
+        <div style="display:flex;gap:10px;margin-top:6px;">
+          <button class="btn btn-primary" onclick="submitAdmin()" id="adminSubmitBtn">Add Admin</button>
+          <button class="btn btn-outline" id="cancelAdminBtn" onclick="cancelAdminEdit()" style="display:none;">Cancel</button>
+        </div>
+        <p id="adminErr" style="color:#e74c3c;font-size:.82rem;margin-top:8px;"></p>
+      </div>
+
+      <div class="card">
+        <div id="adminsTableWrap">
+          <table class="admin-table">
+            <thead><tr><th>Username</th><th>Role</th><th>Created</th><th>Actions</th></tr></thead>
+            <tbody id="adminsTableBody"></tbody>
+          </table>
+          <p id="adminsEmpty" style="text-align:center;color:#aaa;padding:30px;display:none;">No admins yet.</p>
         </div>
       </div>
     </div>
@@ -281,6 +371,38 @@
           <span id="settingsSaved" style="color:green;font-size:0.85rem;display:none;">✅ Saved!</span>
         </div>
         <p id="settingsErr" style="color:#e74c3c;font-size:.82rem;margin-top:8px;"></p>
+      </div>
+
+      <div class="card" style="max-width:520px;">
+        <h3 style="margin-bottom:16px;font-size:1rem;color:var(--primary-dark);">🔁 Subscription Payment Settings</h3>
+        <p style="font-size:0.78rem;color:var(--muted);margin-bottom:14px;">Shown to members when they renew their monthly subscription.</p>
+        <div class="form-group">
+          <label>UPI ID *</label>
+          <input id="subSetUpiId" placeholder="e.g. 9989336847@ybl"/>
+        </div>
+        <div class="form-group">
+          <label>Payee Name</label>
+          <input id="subSetPayeeName" placeholder="e.g. Janoos"/>
+        </div>
+        <div class="form-group">
+          <label>QR Code</label>
+          <div style="display:flex;gap:12px;align-items:center;">
+            <div id="subSetQrPreviewWrap" style="width:72px;height:72px;border:1px dashed #ccc;border-radius:8px;display:flex;align-items:center;justify-content:center;overflow:hidden;flex-shrink:0;background:#f9f9f9;">
+              <span id="subSetQrPlaceholder" style="font-size:.7rem;color:#aaa;text-align:center;">No QR</span>
+              <img id="subSetQrPreview" style="display:none;width:100%;height:100%;object-fit:contain;"/>
+            </div>
+            <div>
+              <label for="subSetQrFile" class="btn btn-outline btn-sm" style="cursor:pointer;display:inline-block;">Upload QR Image</label>
+              <input id="subSetQrFile" type="file" accept="image/*" style="display:none;" onchange="handleSubSetQrUpload(this)"/>
+              <button class="btn btn-danger btn-sm" type="button" onclick="removeSubSetQr()" style="margin-left:6px;">Remove</button>
+            </div>
+          </div>
+        </div>
+        <div style="margin-top:6px;display:flex;gap:10px;align-items:center;">
+          <button class="btn btn-primary" onclick="saveSubscriptionSettings()">Save Settings</button>
+          <span id="subSettingsSaved" style="color:green;font-size:0.85rem;display:none;">✅ Saved!</span>
+        </div>
+        <p id="subSettingsErr" style="color:#e74c3c;font-size:.82rem;margin-top:8px;"></p>
       </div>
     </div>
 
@@ -487,6 +609,7 @@ async function adminLogin() {
     document.getElementById('adminLoginPage').style.display = 'none';
     document.getElementById('adminPanel').style.display = 'flex';
     document.getElementById('adminRoleDisplay').textContent = username + ' · ' + data.admin.role;
+    document.getElementById('navAdmins').style.display = data.admin.role === 'super' ? '' : 'none';
     loadStats();
     populateVDesignerOptions();
   } catch(e) { showToast('Network error', 'error'); }
@@ -502,11 +625,11 @@ async function adminLogout() {
 
 // ── Navigation ─────────────────────────────────────────────────────────────────
 function showSection(sec) {
-  ['dashboard','users','videos','shopvideos','settings','designers','subscriptions'].forEach(s => {
+  ['dashboard','users','videos','shopvideos','settings','designers','subscriptions','sales','admins'].forEach(s => {
     document.getElementById('sec-'+s).style.display = s===sec ? 'block' : 'none';
   });
   if (sec === 'shopvideos') loadShopVideos();
-  if (sec === 'settings')   loadSettings();
+  if (sec === 'settings')   { loadSettings(); loadSubscriptionSettings(); }
   document.querySelectorAll('.admin-sidebar nav a').forEach(a => {
     a.classList.toggle('active', a.dataset.sec === sec);
   });
@@ -514,6 +637,59 @@ function showSection(sec) {
   if (sec==='videos')        loadAdminVideos();
   if (sec==='designers')     loadDesigners();
   if (sec==='subscriptions') loadSubscriptionPayments();
+  if (sec==='sales')         loadSalesStats();
+  if (sec==='admins')        loadAdmins();
+}
+
+// ── Sales ──────────────────────────────────────────────────────────────────────
+let salesTrendChartInstance = null;
+let salesRangeChartInstance = null;
+
+async function loadSalesStats() {
+  try {
+    const res = await fetch('/api/admin/sales-stats');
+    if (res.status===401) { adminLogout(); return; }
+    const d = await res.json();
+    document.getElementById('sl-today').textContent = `₹${(d.todaySales||0).toLocaleString('en-IN')}`;
+    document.getElementById('sl-month').textContent = `₹${(d.monthSales||0).toLocaleString('en-IN')}`;
+
+    const labels = d.dailyBreakdown.map(x => x.day);
+    const sales  = d.dailyBreakdown.map(x => x.sales);
+
+    if (salesTrendChartInstance) salesTrendChartInstance.destroy();
+    salesTrendChartInstance = new Chart(document.getElementById('salesTrendChart'), {
+      type: 'line',
+      data: { labels, datasets: [{ label: 'Sales', data: sales, borderColor: '#d81b6a', backgroundColor: 'rgba(216,27,106,.1)', tension: .3, fill: true }] },
+      options: { responsive: true, maintainAspectRatio: false, scales: { x: { title: { display: true, text: 'Day of month' } }, y: { beginAtZero: true } } }
+    });
+  } catch(e) { showToast('Error loading sales stats', 'error'); }
+}
+
+async function loadSalesRange() {
+  const from = document.getElementById('slRangeFrom').value;
+  const to   = document.getElementById('slRangeTo').value;
+  document.getElementById('slRangeErr').textContent = '';
+  if (!from || !to) { document.getElementById('slRangeErr').textContent = 'Please pick both dates.'; return; }
+  if (from > to) { document.getElementById('slRangeErr').textContent = 'From date must be before To date.'; return; }
+
+  const res = await fetch(`/api/admin/sales-range?from=${from}&to=${to}`);
+  if (res.status===401) { adminLogout(); return; }
+  const d = await res.json();
+  if (d.error) { document.getElementById('slRangeErr').textContent = d.error; return; }
+
+  document.getElementById('slRangeResult').style.display = '';
+  document.getElementById('sl-rangeSales').textContent  = `₹${(d.totalSales||0).toLocaleString('en-IN')}`;
+  document.getElementById('sl-rangeOrders').textContent = d.orderCount;
+
+  const labels = d.dailyBreakdown.map(x => new Date(x.date).toLocaleDateString('en-IN', { day:'2-digit', month:'short' }));
+  const sales  = d.dailyBreakdown.map(x => x.sales);
+
+  if (salesRangeChartInstance) salesRangeChartInstance.destroy();
+  salesRangeChartInstance = new Chart(document.getElementById('salesRangeChart'), {
+    type: 'bar',
+    data: { labels, datasets: [{ label: 'Sales', data: sales, backgroundColor: '#d81b6a' }] },
+    options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true } } }
+  });
 }
 
 // ── Subscription Renewals ───────────────────────────────────────────────────────
@@ -982,6 +1158,84 @@ async function deleteDesigner(id, name) {
   loadDesigners();
 }
 
+// ── Admins ─────────────────────────────────────────────────────────────────────
+let editingAdminId = null;
+
+async function loadAdmins() {
+  const r = await fetch('/api/admin/admins');
+  if (r.status === 401) { adminLogout(); return; }
+  const d = await r.json();
+  const tbody = document.getElementById('adminsTableBody');
+  tbody.innerHTML = '';
+  if (!d.success) { document.getElementById('adminsEmpty').textContent = d.error || 'Failed to load.'; document.getElementById('adminsEmpty').style.display = ''; return; }
+  document.getElementById('adminsEmpty').style.display = d.data.length ? 'none' : '';
+  d.data.forEach(a => {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td><strong>${a.username}</strong></td>
+      <td><span style="padding:2px 10px;border-radius:12px;font-size:.75rem;font-weight:600;background:${a.role==='super'?'#f0ebff':'#e8f4fd'};color:${a.role==='super'?'#6c3fc5':'#2980b9'}">${a.role}</span></td>
+      <td style="font-size:.82rem;color:#666;">${new Date(a.createdAt).toLocaleDateString('en-IN')}</td>
+      <td style="white-space:nowrap;">
+        <button class="btn btn-sm" style="background:#3498db;color:#fff;" onclick='editAdmin(${JSON.stringify(a)})'>Edit</button>
+        &nbsp;<button class="btn btn-sm btn-danger" onclick="deleteAdmin('${a._id}','${a.username}')">Delete</button>
+      </td>`;
+    tbody.appendChild(tr);
+  });
+}
+
+function editAdmin(a) {
+  editingAdminId = a._id;
+  document.getElementById('aUsername').value = a.username;
+  document.getElementById('aPassword').value = '';
+  document.getElementById('aPasswordHint').textContent = '(leave blank to keep unchanged)';
+  document.getElementById('aRole').value = a.role;
+  document.getElementById('adminFormTitle').textContent = 'Edit Admin';
+  document.getElementById('adminSubmitBtn').textContent = 'Update Admin';
+  document.getElementById('cancelAdminBtn').style.display = '';
+  document.getElementById('adminErr').textContent = '';
+  document.getElementById('sec-admins').scrollIntoView({ behavior: 'smooth' });
+}
+
+function cancelAdminEdit() {
+  editingAdminId = null;
+  ['aUsername','aPassword'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('aPasswordHint').textContent = '*';
+  document.getElementById('aRole').value = 'staff';
+  document.getElementById('adminFormTitle').textContent = 'Add Admin';
+  document.getElementById('adminSubmitBtn').textContent = 'Add Admin';
+  document.getElementById('cancelAdminBtn').style.display = 'none';
+  document.getElementById('adminErr').textContent = '';
+}
+
+async function submitAdmin() {
+  const username = document.getElementById('aUsername').value.trim();
+  const password = document.getElementById('aPassword').value;
+  const role     = document.getElementById('aRole').value;
+  document.getElementById('adminErr').textContent = '';
+  if (!username || (!editingAdminId && !password)) {
+    document.getElementById('adminErr').textContent = 'Username and password are required.'; return;
+  }
+  const url    = editingAdminId ? `/api/admin/admins/${editingAdminId}` : '/api/admin/admins';
+  const method = editingAdminId ? 'PATCH' : 'POST';
+  const body = { username, role };
+  if (password) body.password = password;
+  const r = await fetch(url, { method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+  const d = await r.json();
+  if (!d.success) { document.getElementById('adminErr').textContent = d.error; return; }
+  showToast(editingAdminId ? 'Admin updated!' : 'Admin added!', 'success');
+  cancelAdminEdit();
+  loadAdmins();
+}
+
+async function deleteAdmin(id, username) {
+  if (!confirm(`Delete admin "${username}"?`)) return;
+  const r = await fetch(`/api/admin/admins/${id}`, { method: 'DELETE' });
+  const d = await r.json();
+  if (!d.success) { showToast(d.error || 'Failed to delete admin', 'error'); return; }
+  showToast('Admin deleted', 'success');
+  loadAdmins();
+}
+
 // ── Videos ─────────────────────────────────────────────────────────────────────
 let editingVideoId = null;
 
@@ -1215,6 +1469,87 @@ async function saveSettings() {
     saved.style.display = 'inline'; setTimeout(() => saved.style.display = 'none', 2500);
   } else {
     document.getElementById('settingsErr').textContent = d.error;
+  }
+}
+
+// ── Subscription Payment Settings ────────────────────────────────────────────
+let subSetQrCode = '';
+
+async function loadSubscriptionSettings() {
+  const res = await fetch('/api/admin/settings/subscription-payment', { credentials: 'include' });
+  const d = await res.json();
+  if (!d.success) return;
+  document.getElementById('subSetUpiId').value = d.upiId || '';
+  document.getElementById('subSetPayeeName').value = d.payeeName || '';
+  subSetQrCode = d.qrCode || '';
+  renderSubSetQrPreview();
+}
+
+function renderSubSetQrPreview() {
+  const img = document.getElementById('subSetQrPreview');
+  const ph  = document.getElementById('subSetQrPlaceholder');
+  if (subSetQrCode) {
+    img.src = subSetQrCode; img.style.display = ''; ph.style.display = 'none';
+  } else {
+    img.style.display = 'none'; ph.style.display = '';
+  }
+}
+
+function compressSubSetQrImage(src) {
+  const MAX_BYTES = 500 * 1024;
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.onload = () => {
+      const maxDim = 800;
+      const scale = Math.min(1, maxDim / Math.max(img.width, img.height));
+      const canvas = document.createElement('canvas');
+      canvas.width = img.width * scale;
+      canvas.height = img.height * scale;
+      canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
+      let dataUrl = canvas.toDataURL('image/png');
+      if (dataUrl.length * 0.75 > MAX_BYTES) dataUrl = canvas.toDataURL('image/jpeg', 0.85);
+      resolve(dataUrl);
+    };
+    img.onerror = reject;
+    img.src = src;
+  });
+}
+
+function handleSubSetQrUpload(input) {
+  const file = input.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    compressSubSetQrImage(e.target.result).then(dataUrl => {
+      subSetQrCode = dataUrl;
+      renderSubSetQrPreview();
+    });
+  };
+  reader.readAsDataURL(file);
+  input.value = '';
+}
+
+function removeSubSetQr() {
+  subSetQrCode = '';
+  renderSubSetQrPreview();
+}
+
+async function saveSubscriptionSettings() {
+  const upiId     = document.getElementById('subSetUpiId').value.trim();
+  const payeeName = document.getElementById('subSetPayeeName').value.trim();
+  document.getElementById('subSettingsErr').textContent = '';
+  if (!upiId) { document.getElementById('subSettingsErr').textContent = 'UPI ID is required.'; return; }
+  const res = await fetch('/api/admin/settings/subscription-payment', {
+    method: 'PATCH', credentials: 'include',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ upiId, payeeName, qrCode: subSetQrCode })
+  });
+  const d = await res.json();
+  if (d.success) {
+    const saved = document.getElementById('subSettingsSaved');
+    saved.style.display = 'inline'; setTimeout(() => saved.style.display = 'none', 2500);
+  } else {
+    document.getElementById('subSettingsErr').textContent = d.error;
   }
 }
 </script>

@@ -165,6 +165,7 @@ const adminSchema = new mongoose.Schema({
   password: { type: String, required: true },
   role: { type: String, enum: ["super", "staff"], default: "staff" },
   createdAt: { type: Date, default: Date.now },
+  updatedAt: { type: Date, default: Date.now },
 });
 
 const videoSchema = new mongoose.Schema({
@@ -248,6 +249,12 @@ function authAdmin(req, res, next) {
   next();
 }
 
+function requireSuperRole(req, res, next) {
+  if (!req.session.admin || req.session.admin.role !== "super")
+    return res.status(403).json({ success: false, error: "Only super admins can manage admin accounts" });
+  next();
+}
+
 // ─── Subscription Kit — members pay a recurring monthly fee ───────────────────
 // (separate from the one-time registration fee above)
 const { requireActiveSubscription, deactivateOverdue } = mountSubscriptionKit(app, {
@@ -256,7 +263,11 @@ const { requireActiveSubscription, deactivateOverdue } = mountSubscriptionKit(ap
   authTenant: authUser,
   resolveTenantId: req => ({ userId: req.user.userId }),
   authAdmin,
-  upi: { id: process.env.PLATFORM_UPI_ID || "9989336847@ybl", payeeName: process.env.PLATFORM_UPI_NAME || "Janoos" },
+  upi: async () => ({
+    id: await getSetting("subscriptionUpiId", process.env.PLATFORM_UPI_ID || "9989336847@ybl"),
+    payeeName: await getSetting("subscriptionPayeeName", process.env.PLATFORM_UPI_NAME || "Janoos"),
+    qrCode: await getSetting("subscriptionQrCode", "")
+  }),
   graceDays: 3
 });
 deactivateOverdue().catch(err => console.error("Subscription sweep error:", err));
@@ -523,6 +534,63 @@ app.delete("/api/admin/designers/:id", authAdmin, async (req, res) => {
   } catch (e) { res.status(500).json({ success: false, error: e.message }); }
 });
 
+// ─── Super admin: manage admin accounts ─────────────────────────────────────────
+app.get("/api/admin/admins", authAdmin, requireSuperRole, async (req, res) => {
+  try {
+    const admins = await Admin.find().sort({ createdAt: -1 }).select("-password");
+    res.json({ success: true, data: admins });
+  } catch (e) { res.status(500).json({ success: false, error: e.message }); }
+});
+
+app.post("/api/admin/admins", authAdmin, requireSuperRole, async (req, res) => {
+  try {
+    const { username, password, role } = req.body;
+    if (!username || !password) return res.status(400).json({ success: false, error: "username and password are required" });
+    if (!["super", "staff"].includes(role)) return res.status(400).json({ success: false, error: "role must be super or staff" });
+    const exists = await Admin.findOne({ username });
+    if (exists) return res.status(409).json({ success: false, error: "Username already taken" });
+    const hashed = await bcrypt.hash(password, 10);
+    const admin = await Admin.create({ username, password: hashed, role });
+    const { password: _pw, ...safe } = admin.toObject();
+    res.status(201).json({ success: true, data: safe });
+  } catch (e) { res.status(500).json({ success: false, error: e.message }); }
+});
+
+app.patch("/api/admin/admins/:id", authAdmin, requireSuperRole, async (req, res) => {
+  try {
+    const { username, password, role } = req.body;
+    const update = { updatedAt: new Date() };
+    if (username) {
+      const exists = await Admin.findOne({ username, _id: { $ne: req.params.id } });
+      if (exists) return res.status(409).json({ success: false, error: "Username already taken" });
+      update.username = username;
+    }
+    if (role) {
+      if (!["super", "staff"].includes(role)) return res.status(400).json({ success: false, error: "role must be super or staff" });
+      update.role = role;
+    }
+    if (password) update.password = await bcrypt.hash(password, 10);
+    const admin = await Admin.findByIdAndUpdate(req.params.id, update, { new: true }).select("-password");
+    if (!admin) return res.status(404).json({ success: false, error: "Admin not found" });
+    res.json({ success: true, data: admin });
+  } catch (e) { res.status(500).json({ success: false, error: e.message }); }
+});
+
+app.delete("/api/admin/admins/:id", authAdmin, requireSuperRole, async (req, res) => {
+  try {
+    const target = await Admin.findById(req.params.id);
+    if (!target) return res.status(404).json({ success: false, error: "Admin not found" });
+    if (target.username === req.session.admin.username)
+      return res.status(400).json({ success: false, error: "You cannot delete your own account" });
+    if (target.role === "super") {
+      const superCount = await Admin.countDocuments({ role: "super" });
+      if (superCount <= 1) return res.status(400).json({ success: false, error: "Cannot delete the last super admin" });
+    }
+    await Admin.findByIdAndDelete(req.params.id);
+    res.json({ success: true, message: "Admin deleted" });
+  } catch (e) { res.status(500).json({ success: false, error: e.message }); }
+});
+
 // Admin stats
 app.get("/api/admin/stats", authAdmin, async (req, res) => {
   try {
@@ -695,6 +763,74 @@ app.patch("/api/admin/orders/:orderId/payment", authAdmin, async (req, res) => {
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
+// Admin: sales revenue stats (current month trend + today/month totals)
+function orderRevenue(o) {
+  let rev = 0;
+  if (o.advanceStatus === "verified")   rev += o.advanceAmount   || 0;
+  if (o.remainingStatus === "verified") rev += o.remainingAmount || 0;
+  return rev;
+}
+
+app.get("/api/admin/sales-stats", authAdmin, async (req, res) => {
+  try {
+    const now = new Date();
+    const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+
+    const monthOrders = await Order.find({ createdAt: { $gte: startOfMonth } });
+
+    let todaySales = 0, monthSales = 0;
+    const dailyMap = {};
+
+    monthOrders.forEach(o => {
+      const revenue = orderRevenue(o);
+      monthSales += revenue;
+      if (o.createdAt >= startOfToday) todaySales += revenue;
+      const day = o.createdAt.getDate();
+      dailyMap[day] = (dailyMap[day] || 0) + revenue;
+    });
+
+    const daysInMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
+    const dailyBreakdown = Array.from({ length: daysInMonth }, (_, i) => {
+      const day = i + 1;
+      return { day, sales: dailyMap[day] || 0 };
+    });
+
+    res.json({ todaySales, monthSales, dailyBreakdown });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.get("/api/admin/sales-range", authAdmin, async (req, res) => {
+  try {
+    const { from, to } = req.query;
+    if (!from || !to) return res.status(400).json({ error: "from and to dates are required (YYYY-MM-DD)" });
+
+    const fromDate = new Date(from + "T00:00:00");
+    const toDate   = new Date(to   + "T23:59:59.999");
+    if (isNaN(fromDate) || isNaN(toDate) || fromDate > toDate)
+      return res.status(400).json({ error: "Invalid date range" });
+
+    const orders = await Order.find({ createdAt: { $gte: fromDate, $lte: toDate } }).sort({ createdAt: 1 });
+
+    let totalSales = 0;
+    const dailyMap = {};
+    orders.forEach(o => {
+      const revenue = orderRevenue(o);
+      totalSales += revenue;
+      const key = o.createdAt.toISOString().split("T")[0];
+      dailyMap[key] = (dailyMap[key] || 0) + revenue;
+    });
+
+    const dailyBreakdown = Object.keys(dailyMap).sort().map(date => ({ date, sales: dailyMap[date] }));
+
+    res.json({ totalSales, orderCount: orders.length, dailyBreakdown });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // Admin: get shop settings
 app.get("/api/admin/settings", authAdmin, async (req, res) => {
   try {
@@ -809,6 +945,27 @@ app.patch("/api/admin/settings/order-payment", authAdmin, async (req, res) => {
     if (upiId)         await Settings.findOneAndUpdate({ key: "orderUpiId" },         { value: upiId },         { upsert: true });
     if (payeeName)     await Settings.findOneAndUpdate({ key: "orderPayeeName" },     { value: payeeName },     { upsert: true });
     if (advanceAmount) await Settings.findOneAndUpdate({ key: "orderAdvanceAmount" }, { value: advanceAmount }, { upsert: true });
+    res.json({ success: true });
+  } catch (e) { res.status(500).json({ success: false, error: e.message }); }
+});
+
+// Admin: get subscription (member monthly renewal) payment settings
+app.get("/api/admin/settings/subscription-payment", authAdmin, async (req, res) => {
+  try {
+    const upiId     = await getSetting("subscriptionUpiId",     process.env.PLATFORM_UPI_ID  || "9989336847@ybl");
+    const payeeName = await getSetting("subscriptionPayeeName", process.env.PLATFORM_UPI_NAME || "Janoos");
+    const qrCode    = await getSetting("subscriptionQrCode",    "");
+    res.json({ success: true, upiId, payeeName, qrCode });
+  } catch (e) { res.status(500).json({ success: false, error: e.message }); }
+});
+
+// Admin: update subscription (member monthly renewal) payment settings
+app.patch("/api/admin/settings/subscription-payment", authAdmin, async (req, res) => {
+  try {
+    const { upiId, payeeName, qrCode } = req.body;
+    if (upiId !== undefined)     await Settings.findOneAndUpdate({ key: "subscriptionUpiId" },     { value: upiId },     { upsert: true });
+    if (payeeName !== undefined) await Settings.findOneAndUpdate({ key: "subscriptionPayeeName" }, { value: payeeName }, { upsert: true });
+    if (qrCode !== undefined)    await Settings.findOneAndUpdate({ key: "subscriptionQrCode" },    { value: qrCode },    { upsert: true });
     res.json({ success: true });
   } catch (e) { res.status(500).json({ success: false, error: e.message }); }
 });

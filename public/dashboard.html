@@ -613,8 +613,12 @@ async function openRenewSubModal() {
     const upiId = data.upi?.id || '9989336847@ybl';
     const payeeName = encodeURIComponent(data.upi?.payeeName || 'Janoos');
     document.getElementById('renewSubUpiId').textContent = upiId;
-    const qrData = `upi://pay?pa=${upiId}&pn=${payeeName}&am=${data.amount || ''}&cu=INR`;
-    document.getElementById('renewSubQr').src = `https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(qrData)}`;
+    if (data.upi?.qrCode) {
+      document.getElementById('renewSubQr').src = data.upi.qrCode;
+    } else {
+      const qrData = `upi://pay?pa=${upiId}&pn=${payeeName}&am=${data.amount || ''}&cu=INR`;
+      document.getElementById('renewSubQr').src = `https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(qrData)}`;
+    }
   } catch (e) {
     document.getElementById('renewSubErr').textContent = 'Could not load subscription status.';
   }

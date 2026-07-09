@@ -47,7 +47,7 @@ function getSubscriptionPaymentModel(tenantModelName) {
  * @param opts.authTenant     Auth middleware for the paying tenant's own login
  * @param opts.resolveTenantId  (req) => Mongoose findOne query identifying the tenant, e.g. req => ({ userId: req.user.userId })
  * @param opts.authAdmin      Auth middleware for the platform admin
- * @param opts.upi            { id, payeeName } — platform's own UPI ID that tenants pay into
+ * @param opts.upi            { id, payeeName, qrCode } — or an async fn returning that shape — platform's own UPI details tenants pay into
  * @param opts.fields          Override tenant field names: { amount, due, active, history }
  * @param opts.basePaths       Override route prefixes: { tenant, admin }
  * @param opts.graceDays       Days past due before a tenant is treated as expired (default 0)
@@ -85,7 +85,7 @@ function mountSubscriptionKit(app, opts) {
       dueDate: tenant[F.due] || null,
       isActive: tenant[F.active] !== false,
       overdue: isOverdue(tenant),
-      upi
+      upi: typeof upi === 'function' ? await upi() : upi
     });
   });
 
