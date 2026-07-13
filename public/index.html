@@ -5,6 +5,10 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Janoos – Customised Stitching</title>
   <link rel="stylesheet" href="style.css" />
+  <link rel="manifest" href="/manifest.json"/>
+  <meta name="theme-color" content="#c2185b"/>
+  <link rel="icon" href="/icon-192.png"/>
+  <link rel="apple-touch-icon" href="/icon-192.png"/>
 </head>
 <body>
 
@@ -395,6 +399,7 @@ function selectStyleFromVideo() {
 }
 
 loadVideos();
+if ('serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js').catch(()=>{});
 </script>
 </body>
 </html>
