@@ -38,7 +38,12 @@ app.use(
     saveUninitialized: false,
     cookie: {
       maxAge: 7 * 24 * 60 * 60 * 1000,
-      secure: process.env.NODE_ENV === "production",
+      // secure cookies require CloudFront to forward X-Forwarded-Proto to the origin,
+      // which distribution E2WYP4M93XLK56 does not currently do (http-only origin +
+      // legacy ForwardedValues) — express-session silently drops the cookie entirely
+      // when it can't confirm a secure connection, which broke admin login in prod.
+      // Re-enable once the CloudFront distribution forwards that header correctly.
+      secure: false,
       sameSite: "lax",
     },
   })
