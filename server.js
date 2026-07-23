@@ -31,6 +31,17 @@ if (!process.env.SESSION_SECRET) {
   console.error("❌  SESSION_SECRET is not set. Refusing to start with an insecure default.");
   process.exit(1);
 }
+// In production, every request reaches this instance via CloudFront (origin is
+// intentionally http-only — CloudFront terminates TLS at the edge, always
+// redirect-to-https for viewers). CloudFront cannot be made to forward a real
+// X-Forwarded-Proto to a http-only origin (Origin Request Policies don't inject
+// it here, and CloudFront Functions are blocked from setting that header at all —
+// both tried and confirmed 2026-07-23). Since HTTPS-to-viewer is already guaranteed
+// out of band, assert it directly so express-session's Secure cookie isn't silently
+// dropped by its own req.secure check.
+if (process.env.NODE_ENV === "production") {
+  app.use((req, res, next) => { req.headers["x-forwarded-proto"] = "https"; next(); });
+}
 app.use(
   session({
     secret: process.env.SESSION_SECRET,
@@ -38,8 +49,6 @@ app.use(
     saveUninitialized: false,
     cookie: {
       maxAge: 7 * 24 * 60 * 60 * 1000,
-      // requires CloudFront distribution E2WYP4M93XLK56 to forward X-Forwarded-Proto
-      // to the origin (fixed 2026-07-23 via a Managed-AllViewer origin request policy)
       secure: process.env.NODE_ENV === "production",
       sameSite: "lax",
     },
