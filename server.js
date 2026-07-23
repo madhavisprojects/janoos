@@ -10,11 +10,15 @@ const multerS3 = require("multer-s3");
 const { S3Client, DeleteObjectCommand } = require("@aws-sdk/client-s3");
 const axios = require("axios");
 const path = require("path");
+const rateLimit = require("express-rate-limit");
 const { mountSubscriptionKit } = require("./subscription-kit");
 
 const http = require("http");
 
+function escapeRegex(str) { return String(str).replace(/[.*+?^${}()|[\]\\]/g, "\\$&"); }
+
 const app = express();
+app.set("trust proxy", 1); // behind EB's load balancer
 const server = http.createServer(app);
 const PORT = process.env.PORT || 5000;
 
@@ -23,14 +27,38 @@ app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname, "public")));
+if (!process.env.SESSION_SECRET) {
+  console.error("❌  SESSION_SECRET is not set. Refusing to start with an insecure default.");
+  process.exit(1);
+}
 app.use(
   session({
-    secret: process.env.SESSION_SECRET || "janoos-secret",
+    secret: process.env.SESSION_SECRET,
     resave: false,
     saveUninitialized: false,
-    cookie: { maxAge: 7 * 24 * 60 * 60 * 1000 },
+    cookie: {
+      maxAge: 7 * 24 * 60 * 60 * 1000,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "lax",
+    },
   })
 );
+
+// Login / OTP endpoints: slow down credential + OTP brute-forcing
+const loginLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 20,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: "Too many attempts. Please try again later." },
+});
+const otpLimiter = rateLimit({
+  windowMs: 10 * 60 * 1000,
+  max: 10,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: "Too many attempts. Please try again later." },
+});
 
 // ─── MongoDB ───────────────────────────────────────────────────────────────────
 mongoose
@@ -49,13 +77,15 @@ const s3 = new S3Client({
 
 const BUCKET = process.env.AWS_S3_BUCKET || "prochat-images";
 
+const ALLOWED_UPLOAD_FOLDERS = new Set(["janoos/orders"]);
+
 const upload = multer({
   storage: multerS3({
     s3,
     bucket: BUCKET,
     key: (req, file, cb) => {
-      const folder = req.query.folder || "janoos/orders";
-      const filename = `${folder}/${Date.now()}-${file.originalname.replace(/\s+/g, "-")}`;
+      const folder = ALLOWED_UPLOAD_FOLDERS.has(req.query.folder) ? req.query.folder : "janoos/orders";
+      const filename = `${folder}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}-${file.originalname.replace(/\s+/g, "-")}`;
       cb(null, filename);
     },
   }),
@@ -217,11 +247,16 @@ const Designer   = mongoose.model("JanoosDesigner",  designerSchema);
 
 // ─── Seed super admin ──────────────────────────────────────────────────────────
 async function seedAdmin() {
-  const exists = await Admin.findOne({ username: process.env.SUPER_ADMIN_USERNAME || "janoos_admin" });
+  const username = process.env.ADMIN_USERNAME || "janoos_admin";
+  const exists = await Admin.findOne({ username });
   if (!exists) {
-    const hashed = await bcrypt.hash(process.env.SUPER_ADMIN_PASSWORD || "janoos@123", 10);
+    if (!process.env.ADMIN_PASSWORD) {
+      console.error("⚠️   No super admin account exists and ADMIN_PASSWORD is not set — skipping admin seed. Set ADMIN_PASSWORD and restart to create one.");
+      return;
+    }
+    const hashed = await bcrypt.hash(process.env.ADMIN_PASSWORD, 10);
     await Admin.create({
-      username: process.env.SUPER_ADMIN_USERNAME || "janoos_admin",
+      username,
       password: hashed,
       role: "super",
     });
@@ -231,7 +266,11 @@ async function seedAdmin() {
 mongoose.connection.once("open", seedAdmin);
 
 // ─── Auth Middleware ───────────────────────────────────────────────────────────
-const JWT_SECRET = process.env.JWT_SECRET || "janoos-jwt-secret";
+if (!process.env.JWT_SECRET) {
+  console.error("❌  JWT_SECRET is not set. Refusing to start with an insecure default.");
+  process.exit(1);
+}
+const JWT_SECRET = process.env.JWT_SECRET;
 
 function authUser(req, res, next) {
   const token = req.headers.authorization?.split(" ")[1];
@@ -315,7 +354,7 @@ app.post("/api/register", async (req, res) => {
 });
 
 // Login
-app.post("/api/login", async (req, res) => {
+app.post("/api/login", loginLimiter, async (req, res) => {
   try {
     const { mobile, password } = req.body;
     const user = await User.findOne({ mobile });
@@ -364,7 +403,7 @@ app.put("/api/me", authUser, async (req, res) => {
 });
 
 // Forgot password
-app.post("/api/forgot-password", async (req, res) => {
+app.post("/api/forgot-password", otpLimiter, async (req, res) => {
   try {
     const { mobile } = req.body;
     const user = await User.findOne({ mobile });
@@ -379,7 +418,7 @@ app.post("/api/forgot-password", async (req, res) => {
 });
 
 // Reset password
-app.post("/api/reset-password", async (req, res) => {
+app.post("/api/reset-password", otpLimiter, async (req, res) => {
   try {
     const { mobile, otp, newPassword } = req.body;
     const record = otpStore.get(mobile);
@@ -466,7 +505,7 @@ app.get("/api/orders/:orderId", authUser, async (req, res) => {
 });
 
 // ─── Image upload ──────────────────────────────────────────────────────────────
-app.post("/api/upload", upload.array("images", 5), (req, res) => {
+app.post("/api/upload", authUser, upload.array("images", 5), (req, res) => {
   const urls = req.files.map((f) => f.location);
   res.json({ success: true, urls });
 });
@@ -476,7 +515,7 @@ app.post("/api/upload", upload.array("images", 5), (req, res) => {
 // ═══════════════════════════════════════════════════════════════════════════════
 
 // Admin login
-app.post("/api/admin/login", async (req, res) => {
+app.post("/api/admin/login", loginLimiter, async (req, res) => {
   try {
     const { username, password } = req.body;
     const admin = await Admin.findOne({ username });
@@ -617,11 +656,14 @@ app.get("/api/admin/users", authAdmin, async (req, res) => {
   try {
     const { search, paymentStatus, gender } = req.query;
     const query = {};
-    if (search) query.$or = [
-      { name: new RegExp(search, "i") },
-      { mobile: new RegExp(search, "i") },
-      { userId: new RegExp(search, "i") },
-    ];
+    if (search) {
+      const safeSearch = new RegExp(escapeRegex(search), "i");
+      query.$or = [
+        { name: safeSearch },
+        { mobile: safeSearch },
+        { userId: safeSearch },
+      ];
+    }
     if (paymentStatus) query.paymentStatus = paymentStatus;
     if (gender === "Women") query.$and = [{ $or: [{ gender: "Women" }, { gender: { $exists: false } }, { gender: null }] }];
     else if (gender) query.gender = gender;
@@ -714,10 +756,11 @@ app.get("/api/admin/orders", authAdmin, async (req, res) => {
   try {
     const { search, status, userId } = req.query;
     const query = {};
+    const safeSearch = search ? new RegExp(escapeRegex(search), "i") : null;
     if (search) query.$or = [
-      { orderId: new RegExp(search, "i") },
-      { userName: new RegExp(search, "i") },
-      { userMobile: new RegExp(search, "i") },
+      { orderId: safeSearch },
+      { userName: safeSearch },
+      { userMobile: safeSearch },
     ];
     if (status) query.status = status;
     if (userId) query.userId = userId;

@@ -470,7 +470,7 @@ async function uploadImages() {
   if (!selectedFiles.length) return [];
   const formData = new FormData();
   selectedFiles.forEach(f => formData.append('images', f));
-  const res = await fetch('/api/upload?folder=janoos/orders', { method:'POST', body: formData });
+  const res = await fetch('/api/upload?folder=janoos/orders', { method:'POST', headers:{ 'Authorization':'Bearer '+token }, body: formData });
   const data = await res.json();
   return data.urls || [];
 }
