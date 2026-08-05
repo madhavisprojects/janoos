@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Dashboard – Janoos</title>
+  <title>Dashboard – Mehdis</title>
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
@@ -12,7 +12,7 @@
   <div class="logo">
     <div style="width:38px;height:38px;border-radius:50%;background:rgba(255,255,255,0.3);display:flex;align-items:center;justify-content:center;font-size:1.3rem;border:2px solid #fff;">✂️</div>
     <div>
-      <div class="logo-text">Janoos</div>
+      <div class="logo-text">Mehdis</div>
       <div class="logo-sub">Customised Stitching</div>
     </div>
   </div>
@@ -29,7 +29,7 @@
     <div class="dash-avatar" id="userAvatar">J</div>
     <div>
       <h2 id="welcomeName">Welcome!</h2>
-      <p id="welcomeSub">Janoos Member</p>
+      <p id="welcomeSub">Mehdis Member</p>
       <div id="paymentBadge"></div>
     </div>
   </div>
@@ -543,7 +543,7 @@ async function openPaymentModal() {
     const s = await r.json();
     orderAdvanceAmount = s.advanceAmount || 999;
     const upiId = s.upiId || '9989336847@ybl';
-    const payeeName = encodeURIComponent(s.payeeName || 'Janoos');
+    const payeeName = encodeURIComponent(s.payeeName || 'Mehdis');
     document.getElementById('pmtAmount').textContent = orderAdvanceAmount;
     document.getElementById('pmtUpiId').textContent = upiId;
     const qrData = `upi://pay?pa=${upiId}&pn=${payeeName}&am=${orderAdvanceAmount}&cu=INR`;
@@ -611,7 +611,7 @@ async function openRenewSubModal() {
     document.getElementById('renewSubAmount').textContent = data.amount || 0;
     document.getElementById('renewSubDue').textContent = data.dueDate ? new Date(data.dueDate).toLocaleDateString('en-IN') : '—';
     const upiId = data.upi?.id || '9989336847@ybl';
-    const payeeName = encodeURIComponent(data.upi?.payeeName || 'Janoos');
+    const payeeName = encodeURIComponent(data.upi?.payeeName || 'Mehdis');
     document.getElementById('renewSubUpiId').textContent = upiId;
     if (data.upi?.qrCode) {
       document.getElementById('renewSubQr').src = data.upi.qrCode;
@@ -659,7 +659,7 @@ async function openRemainingPayment(orderId, amount) {
     const r = await fetch('/api/settings/order-payment');
     const s = await r.json();
     const upiId = s.upiId || '9989336847@ybl';
-    const payeeName = encodeURIComponent(s.payeeName || 'Janoos');
+    const payeeName = encodeURIComponent(s.payeeName || 'Mehdis');
     document.getElementById('remUpiId').textContent = upiId;
     const qrData = `upi://pay?pa=${upiId}&pn=${payeeName}&am=${amount}&cu=INR`;
     document.getElementById('remQr').src = `https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(qrData)}`;

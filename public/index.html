@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Janoos – Customised Stitching</title>
+  <title>Mehdis – Customised Stitching</title>
   <link rel="stylesheet" href="style.css" />
   <link rel="manifest" href="/manifest.json"/>
   <meta name="theme-color" content="#c2185b"/>
@@ -17,7 +17,7 @@
   <div class="logo">
     <div style="width:38px;height:38px;border-radius:50%;background:rgba(255,255,255,0.3);display:flex;align-items:center;justify-content:center;font-size:1.3rem;border:2px solid #fff;">✂️</div>
     <div>
-      <div class="logo-text">Janoos</div>
+      <div class="logo-text">Mehdis</div>
       <div class="logo-sub">Customised Stitching</div>
     </div>
   </div>
@@ -32,7 +32,7 @@
 
 <!-- Hero -->
 <section class="hero">
-  <h1>✂️ Janoos Collection</h1>
+  <h1>✂️ Mehdis Collection</h1>
   <p>Upload your dream design — we'll stitch it to perfection, tailored just for you.</p>
   <div class="hero-badges">
     <span class="hero-badge">👗 Custom Stitching</span>
@@ -143,15 +143,15 @@
 </section>
 
 <footer>
-  <p>© 2026 Janoos Customised Stitching. All rights reserved.</p>
-  <p style="margin-top:6px;">UPI: 9989336847@ybl &nbsp;|&nbsp; Contact: support@janoos.in</p>
+  <p>© 2026 Mehdis Customised Stitching. All rights reserved.</p>
+  <p style="margin-top:6px;">UPI: 9989336847@ybl &nbsp;|&nbsp; Contact: support@mehdis.in</p>
 </footer>
 
 <!-- Login Modal -->
 <div class="modal-overlay" id="loginModal">
   <div class="modal" style="max-width:400px;">
     <div class="modal-header">
-      <span class="modal-title">✂️ Login to Janoos</span>
+      <span class="modal-title">✂️ Login to Mehdis</span>
       <button class="modal-close" onclick="closeLogin()">✕</button>
     </div>
     <div class="form-group">
@@ -389,7 +389,7 @@ function selectStyleFromVideo() {
   // If logged in, redirect to dashboard with category pre-selected
   const token = localStorage.getItem('janoos_token');
   if (token) {
-    localStorage.setItem('janoos_preselect_category', selectedVideoCategory);
+    localStorage.setItem('mehdis_preselect_category', selectedVideoCategory);
     window.location.href = '/dashboard';
   } else {
     // Prompt to login/register

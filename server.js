@@ -315,7 +315,7 @@ const { requireActiveSubscription, deactivateOverdue } = mountSubscriptionKit(ap
   authAdmin,
   upi: async () => ({
     id: await getSetting("subscriptionUpiId", process.env.PLATFORM_UPI_ID || "9989336847@ybl"),
-    payeeName: await getSetting("subscriptionPayeeName", process.env.PLATFORM_UPI_NAME || "Janoos"),
+    payeeName: await getSetting("subscriptionPayeeName", process.env.PLATFORM_UPI_NAME || "Mehdis"),
     qrCode: await getSetting("subscriptionQrCode", "")
   }),
   graceDays: 3
@@ -889,7 +889,7 @@ app.get("/api/admin/sales-range", authAdmin, async (req, res) => {
 app.get("/api/admin/settings", authAdmin, async (req, res) => {
   try {
     const upiId         = await getSetting("orderUpiId",         "9989336847@ybl");
-    const payeeName     = await getSetting("orderPayeeName",     "Janoos Stitching");
+    const payeeName     = await getSetting("orderPayeeName",     "Mehdis Stitching");
     const advanceAmount = await getSetting("orderAdvanceAmount", 200);
     res.json({ success: true, upiId, payeeName, advanceAmount });
   } catch (e) { res.status(500).json({ success: false, error: e.message }); }
@@ -986,7 +986,7 @@ async function getSetting(key, defaultVal) {
 app.get("/api/settings/order-payment", async (req, res) => {
   try {
     const upiId         = await getSetting("orderUpiId",         "9989336847@ybl");
-    const payeeName     = await getSetting("orderPayeeName",     "Janoos Stitching");
+    const payeeName     = await getSetting("orderPayeeName",     "Mehdis Stitching");
     const advanceAmount = await getSetting("orderAdvanceAmount", 200);
     res.json({ success: true, upiId, payeeName, advanceAmount });
   } catch (e) { res.status(500).json({ success: false, error: e.message }); }
@@ -1007,7 +1007,7 @@ app.patch("/api/admin/settings/order-payment", authAdmin, async (req, res) => {
 app.get("/api/admin/settings/subscription-payment", authAdmin, async (req, res) => {
   try {
     const upiId     = await getSetting("subscriptionUpiId",     process.env.PLATFORM_UPI_ID  || "9989336847@ybl");
-    const payeeName = await getSetting("subscriptionPayeeName", process.env.PLATFORM_UPI_NAME || "Janoos");
+    const payeeName = await getSetting("subscriptionPayeeName", process.env.PLATFORM_UPI_NAME || "Mehdis");
     const qrCode    = await getSetting("subscriptionQrCode",    "");
     res.json({ success: true, upiId, payeeName, qrCode });
   } catch (e) { res.status(500).json({ success: false, error: e.message }); }
@@ -1074,4 +1074,4 @@ app.get("/register", (req, res) => res.sendFile(path.join(__dirname, "public", "
 app.get("/dashboard", (req, res) => res.sendFile(path.join(__dirname, "public", "dashboard.html")));
 app.get("/admin", (req, res) => res.sendFile(path.join(__dirname, "public", "admin.html")));
 
-server.listen(PORT, () => console.log(`Janoos server running on port ${PORT}`));
+server.listen(PORT, () => console.log(`Mehdis server running on port ${PORT}`));
