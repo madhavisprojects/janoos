@@ -10,10 +10,8 @@
 
 <nav class="navbar">
   <div class="logo">
-    <div style="width:38px;height:38px;border-radius:50%;background:rgba(255,255,255,0.3);display:flex;align-items:center;justify-content:center;font-size:1.3rem;border:2px solid #fff;">✂️</div>
     <div>
       <div class="logo-text">Mehdis</div>
-      <div class="logo-sub">Customised Stitching</div>
     </div>
   </div>
   <nav>
@@ -26,69 +24,25 @@
   <div class="register-container">
 
     <div class="register-header">
-      <h1>✂️ Join Mehdis</h1>
+      <h1>Join Mehdis</h1>
       <p>Create your account to start placing custom stitch orders</p>
     </div>
 
     <!-- Step Indicator -->
     <div style="display:flex;justify-content:center;gap:8px;margin-bottom:32px;" id="stepIndicator">
-      <div id="si1" style="display:flex;align-items:center;gap:8px;">
+      <div id="si2" style="display:flex;align-items:center;gap:8px;">
         <div style="width:32px;height:32px;border-radius:50%;background:var(--primary);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;">1</div>
-        <span style="font-weight:600;color:var(--primary);">Payment</span>
-      </div>
-      <div style="width:40px;height:2px;background:var(--border);align-self:center;"></div>
-      <div id="si2" style="display:flex;align-items:center;gap:8px;opacity:0.4;">
-        <div style="width:32px;height:32px;border-radius:50%;background:var(--border);color:var(--muted);display:flex;align-items:center;justify-content:center;font-weight:700;">2</div>
-        <span style="font-weight:600;color:var(--muted);">Details</span>
+        <span style="font-weight:600;color:var(--primary);">Details</span>
       </div>
       <div style="width:40px;height:2px;background:var(--border);align-self:center;"></div>
       <div id="si3" style="display:flex;align-items:center;gap:8px;opacity:0.4;">
-        <div style="width:32px;height:32px;border-radius:50%;background:var(--border);color:var(--muted);display:flex;align-items:center;justify-content:center;font-weight:700;">3</div>
+        <div style="width:32px;height:32px;border-radius:50%;background:var(--border);color:var(--muted);display:flex;align-items:center;justify-content:center;font-weight:700;">2</div>
         <span style="font-weight:600;color:var(--muted);">Done</span>
       </div>
     </div>
 
-    <!-- Step 1: Payment -->
-    <div id="step1">
-      <div class="register-grid">
-        <!-- Payment Box -->
-        <div class="payment-box">
-          <h3>Registration Fee</h3>
-          <div class="amount">₹999 <span>one-time</span></div>
-          <div class="qr-wrap">
-            <img src="https://prochat-images.s3.eu-north-1.amazonaws.com/shared/payment-qr.png" alt="Payment QR Code" />
-          </div>
-          <div class="upi-id">9989336847@ybl</div>
-          <div class="payment-steps">
-            <p><b>Steps to pay:</b></p>
-            <p>1️⃣ Open any UPI app (GPay, PhonePe, Paytm)</p>
-            <p>2️⃣ Scan the QR code or use UPI ID</p>
-            <p>3️⃣ Pay exactly <b>₹999</b></p>
-            <p>4️⃣ Note your <b>Transaction ID (UTR)</b></p>
-            <p>5️⃣ Enter UTR in the form and submit</p>
-          </div>
-        </div>
-
-        <!-- UTR Form -->
-        <div class="card">
-          <div class="auth-title" style="text-align:left;margin-bottom:20px;">💳 Confirm Your Payment</div>
-          <div class="form-group">
-            <label>UPI Transaction ID (UTR) *</label>
-            <input type="text" id="utr" placeholder="e.g. 423156789012" />
-            <small style="color:var(--muted);font-size:0.8rem;margin-top:4px;display:block;">Found in your UPI app under transaction details</small>
-          </div>
-          <div class="form-group">
-            <label>Your UPI ID (optional)</label>
-            <input type="text" id="upiId" placeholder="e.g. yourname@upi" />
-          </div>
-          <button class="btn btn-primary btn-full" onclick="goStep2()">Confirm Payment →</button>
-          <p style="font-size:0.8rem;color:var(--muted);margin-top:12px;text-align:center;">Your registration will be activated once the admin verifies your UTR.</p>
-        </div>
-      </div>
-    </div>
-
     <!-- Step 2: Personal Details -->
-    <div id="step2" style="display:none;">
+    <div id="step2">
       <div class="card" style="max-width:600px;margin:0 auto;">
         <div class="auth-title" style="text-align:left;margin-bottom:20px;">👤 Personal Details</div>
         <div class="form-row">
@@ -127,7 +81,6 @@
           </div>
         </div>
         <div style="display:flex;gap:12px;margin-top:8px;">
-          <button class="btn btn-outline" onclick="goStep1()">← Back</button>
           <button class="btn btn-primary" style="flex:1;" onclick="doRegister()" id="regBtn">Create Account 🎉</button>
         </div>
       </div>
@@ -138,7 +91,7 @@
       <div class="card" style="max-width:480px;margin:0 auto;text-align:center;">
         <div style="font-size:4rem;margin-bottom:16px;">🎉</div>
         <h2 style="color:var(--primary);font-size:1.6rem;font-weight:900;margin-bottom:8px;">Welcome to Mehdis!</h2>
-        <p style="color:var(--muted);margin-bottom:20px;">Your account has been created. Admin will verify your payment (UTR) shortly. Once verified, you can start placing orders!</p>
+        <p style="color:var(--muted);margin-bottom:20px;">Your account has been created and is ready to use. Start placing custom stitch orders right away!</p>
         <div class="card" style="background:var(--bg);border:1px dashed var(--primary);margin-bottom:20px;padding:16px;">
           <p style="font-size:0.9rem;color:var(--muted);">Your User ID</p>
           <p style="font-size:1.1rem;font-weight:800;color:var(--primary);" id="newUserId">—</p>
@@ -153,8 +106,6 @@
 <div class="toast" id="toast"></div>
 
 <script>
-let utrValue = '', upiIdValue = '';
-
 function showToast(msg, type = '') {
   const t = document.getElementById('toast');
   t.textContent = msg;
@@ -163,10 +114,9 @@ function showToast(msg, type = '') {
 }
 
 function setStep(n) {
-  document.getElementById('step1').style.display = n === 1 ? 'block' : 'none';
   document.getElementById('step2').style.display = n === 2 ? 'block' : 'none';
   document.getElementById('step3').style.display = n === 3 ? 'block' : 'none';
-  [1,2,3].forEach(i => {
+  [2,3].forEach(i => {
     const el = document.getElementById('si' + i);
     el.style.opacity = i <= n ? '1' : '0.4';
     const dot = el.querySelector('div');
@@ -175,17 +125,6 @@ function setStep(n) {
     else { dot.style.background = 'var(--border)'; dot.style.color = 'var(--muted)'; }
   });
 }
-
-function goStep2() {
-  utrValue = document.getElementById('utr').value.trim();
-  upiIdValue = document.getElementById('upiId').value.trim();
-  if (!utrValue) return showToast('Please enter your UTR / Transaction ID', 'error');
-  if (utrValue.length < 6) return showToast('UTR looks too short. Please check.', 'error');
-  setStep(2);
-  window.scrollTo({ top: 0, behavior: 'smooth' });
-}
-
-function goStep1() { setStep(1); }
 
 async function doRegister() {
   const name = document.getElementById('name').value.trim();
@@ -213,7 +152,7 @@ async function doRegister() {
       res = await fetch('/api/register', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, mobile, email, address, gender, password, upiId: upiIdValue, utr: utrValue }),
+        body: JSON.stringify({ name, mobile, email, address, gender, password }),
         signal: controller.signal,
       });
     } finally {

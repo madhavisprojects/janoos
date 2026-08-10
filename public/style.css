@@ -2,21 +2,21 @@
 * { margin: 0; padding: 0; box-sizing: border-box; }
 
 :root {
-  --primary: #c2185b;
-  --primary-dark: #880e4f;
-  --primary-light: #f8bbd0;
-  --accent: #ff6f91;
+  --primary: #00796b;
+  --primary-dark: #004d40;
+  --primary-light: #b2dfdb;
+  --accent: #26a69a;
   --gold: #d4a017;
-  --bg: #fff9fb;
+  --bg: #f4faf9;
   --card: #ffffff;
   --text: #2d2d2d;
   --muted: #888;
-  --border: #f0c4d4;
+  --border: #b2dfdb;
   --success: #2e7d32;
   --warning: #f57c00;
   --danger: #c62828;
   --radius: 16px;
-  --shadow: 0 4px 24px rgba(194,24,91,0.10);
+  --shadow: 0 4px 24px rgba(0,121,107,0.12);
 }
 
 body { font-family: 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
@@ -83,7 +83,7 @@ a { text-decoration: none; color: inherit; }
   transition: all 0.2s;
 }
 .btn-primary { background: var(--primary); color: #fff; }
-.btn-primary:hover { background: var(--primary-dark); transform: translateY(-1px); box-shadow: 0 4px 16px rgba(194,24,91,0.35); }
+.btn-primary:hover { background: var(--primary-dark); transform: translateY(-1px); box-shadow: 0 4px 16px rgba(0,121,107,0.35); }
 .btn-white { background: #fff; color: var(--primary); }
 .btn-white:hover { background: var(--primary-light); }
 .btn-outline { background: transparent; color: var(--primary); border: 2px solid var(--primary); }
@@ -205,11 +205,11 @@ a { text-decoration: none; color: inherit; }
   padding: 28px;
   text-align: center;
   cursor: pointer;
-  background: #fdf0f5;
+  background: #e8f5f3;
   transition: background 0.2s;
   position: relative;
 }
-.upload-area:hover { background: #fce4ec; }
+.upload-area:hover { background: #d1ebe7; }
 .upload-area input[type=file] { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
 .upload-area .upload-icon { font-size: 2.4rem; margin-bottom: 8px; }
 .upload-area p { font-size: 0.92rem; color: var(--muted); }
@@ -270,7 +270,7 @@ a { text-decoration: none; color: inherit; }
 table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
 thead th { background: var(--primary); color: #fff; padding: 12px 16px; text-align: left; font-weight: 600; }
 tbody tr { border-bottom: 1px solid var(--border); transition: background 0.1s; }
-tbody tr:hover { background: #fdf0f5; }
+tbody tr:hover { background: #e8f5f3; }
 tbody td { padding: 12px 16px; color: var(--text); }
 .badge { padding: 3px 12px; border-radius: 12px; font-size: 0.78rem; font-weight: 700; }
 .badge-pending { background: #fff3e0; color: #e65100; }

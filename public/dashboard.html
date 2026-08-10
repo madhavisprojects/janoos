@@ -10,10 +10,8 @@
 
 <nav class="navbar">
   <div class="logo">
-    <div style="width:38px;height:38px;border-radius:50%;background:rgba(255,255,255,0.3);display:flex;align-items:center;justify-content:center;font-size:1.3rem;border:2px solid #fff;">✂️</div>
     <div>
       <div class="logo-text">Mehdis</div>
-      <div class="logo-sub">Customised Stitching</div>
     </div>
   </div>
   <nav>
@@ -36,7 +34,7 @@
 
   <!-- Tabs -->
   <div class="dash-tabs">
-    <button class="dash-tab active" onclick="switchTab('new-order')">✂️ New Order</button>
+    <button class="dash-tab active" onclick="switchTab('new-order')">New Order</button>
     <button class="dash-tab" onclick="switchTab('my-orders')">📦 My Orders</button>
     <button class="dash-tab" onclick="switchTab('profile')">👤 Profile</button>
   </div>
@@ -215,7 +213,7 @@
 
 
 
-      <button class="btn btn-primary btn-full" onclick="placeOrder()" id="orderBtn">Place Order ✂️</button>
+      <button class="btn btn-primary btn-full" onclick="placeOrder()" id="orderBtn">Place Order</button>
     </div>
   </div>
 
@@ -243,7 +241,7 @@
 <!-- Loading screen -->
 <div id="loadingScreen" style="display:flex;align-items:center;justify-content:center;min-height:100vh;">
   <div style="text-align:center;">
-    <div style="font-size:3rem;margin-bottom:12px;">✂️</div>
+    <div style="font-size:3rem;margin-bottom:12px;">🧵</div>
     <p style="color:var(--muted);">Loading your dashboard...</p>
   </div>
 </div>
@@ -310,7 +308,7 @@
         <input id="pmtUtr" placeholder="Enter UTR after payment" style="font-size:1rem;"/>
         <p style="font-size:0.78rem;color:var(--muted);margin-top:4px;">Found in your UPI app under transaction details</p>
       </div>
-      <button class="btn btn-primary btn-full" onclick="confirmPaymentAndOrder()" id="pmtConfirmBtn" style="margin-top:6px;">Confirm Payment & Place Order ✂️</button>
+      <button class="btn btn-primary btn-full" onclick="confirmPaymentAndOrder()" id="pmtConfirmBtn" style="margin-top:6px;">Confirm Payment & Place Order</button>
       <p id="pmtErr" style="color:#e74c3c;font-size:0.82rem;margin-top:8px;text-align:center;"></p>
     </div>
   </div>
@@ -531,7 +529,7 @@ async function placeOrder() {
   } catch(e) {
     showToast('Error uploading images', 'error');
   } finally {
-    btn.disabled = false; btn.textContent = 'Place Order ✂️';
+    btn.disabled = false; btn.textContent = 'Place Order';
   }
 }
 
@@ -594,7 +592,7 @@ async function confirmPaymentAndOrder() {
   } catch(e) {
     document.getElementById('pmtErr').textContent = 'Error placing order. Try again.';
   } finally {
-    btn.disabled = false; btn.textContent = 'Confirm Payment & Place Order ✂️';
+    btn.disabled = false; btn.textContent = 'Confirm Payment & Place Order';
   }
 }
 

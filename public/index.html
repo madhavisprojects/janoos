@@ -6,7 +6,7 @@
   <title>Mehdis – Customised Stitching</title>
   <link rel="stylesheet" href="style.css" />
   <link rel="manifest" href="/manifest.json"/>
-  <meta name="theme-color" content="#c2185b"/>
+  <meta name="theme-color" content="#00796b"/>
   <link rel="icon" href="/icon-192.png"/>
   <link rel="apple-touch-icon" href="/icon-192.png"/>
 </head>
@@ -15,10 +15,8 @@
 <!-- Navbar -->
 <nav class="navbar">
   <div class="logo">
-    <div style="width:38px;height:38px;border-radius:50%;background:rgba(255,255,255,0.3);display:flex;align-items:center;justify-content:center;font-size:1.3rem;border:2px solid #fff;">✂️</div>
     <div>
       <div class="logo-text">Mehdis</div>
-      <div class="logo-sub">Customised Stitching</div>
     </div>
   </div>
   <nav>
@@ -32,8 +30,8 @@
 
 <!-- Hero -->
 <section class="hero">
-  <h1>✂️ Mehdis Collection</h1>
-  <p>Upload your dream design — we'll stitch it to perfection, tailored just for you.</p>
+  <h1>Mehdis</h1>
+  <p class="hero-badge" style="display:inline-block;margin-bottom:14px;font-weight:700;">Exclusively for fashion designers</p>
   <div class="hero-badges">
     <span class="hero-badge">👗 Custom Stitching</span>
     <span class="hero-badge">📸 Image-Based Orders</span>
@@ -41,7 +39,7 @@
     <span class="hero-badge">🚀 Express Delivery</span>
   </div>
   <div class="hero-actions">
-    <a href="/register" class="btn btn-white">🌸 Join Now – ₹999</a>
+    <a href="/register" class="btn btn-white">🌸 Join Now – Free</a>
     <button class="btn btn-outline" style="color:#fff;border-color:rgba(255,255,255,0.6);" onclick="openLogin()">Login to Dashboard</button>
   </div>
 </section>
@@ -53,8 +51,8 @@
   <div class="features-grid">
     <div class="feature-card">
       <div class="feature-icon">💳</div>
-      <h3>1. Register & Pay</h3>
-      <p>Sign up with a one-time membership fee of ₹999 via UPI to unlock all features.</p>
+      <h3>1. Register Free</h3>
+      <p>Sign up in seconds — no upfront fee required to unlock all features.</p>
     </div>
     <div class="feature-card">
       <div class="feature-icon">📸</div>
@@ -62,7 +60,7 @@
       <p>Share reference images, describe your dream outfit, and provide measurements.</p>
     </div>
     <div class="feature-card">
-      <div class="feature-icon">✂️</div>
+      <div class="feature-icon">🧵</div>
       <h3>3. We Start Stitching</h3>
       <p>Our expert tailors craft your outfit with care. Track live status from your dashboard.</p>
     </div>
@@ -75,7 +73,7 @@
 </section>
 
 <!-- Categories -->
-<section class="section" id="categories" style="background:#fdf0f5;">
+<section class="section" id="categories" style="background:#e8f5f3;">
   <h2 class="section-title">What We Stitch</h2>
   <p class="section-sub">From traditional to modern — we do it all</p>
   <div class="categories-grid">
@@ -125,12 +123,12 @@
 
 <!-- Membership -->
 <section class="section" style="text-align:center;">
-  <h2 class="section-title">One-Time Membership</h2>
-  <p class="section-sub">Pay once, place unlimited orders</p>
+  <h2 class="section-title">Free Membership</h2>
+  <p class="section-sub">Register free, place unlimited orders</p>
   <div class="card" style="max-width:400px;margin:0 auto;border: 2px solid var(--primary);">
     <div style="font-size:3rem;margin-bottom:12px;">🌸</div>
-    <div style="font-size:2.8rem;font-weight:900;color:var(--primary);">₹999</div>
-    <div style="color:var(--muted);margin-bottom:20px;">One-time registration fee</div>
+    <div style="font-size:2.8rem;font-weight:900;color:var(--primary);">Free</div>
+    <div style="color:var(--muted);margin-bottom:20px;">No registration fee</div>
     <ul style="text-align:left;list-style:none;margin-bottom:24px;font-size:0.92rem;line-height:2;">
       <li>✅ Unlimited custom orders</li>
       <li>✅ Live order tracking</li>
@@ -151,7 +149,7 @@
 <div class="modal-overlay" id="loginModal">
   <div class="modal" style="max-width:400px;">
     <div class="modal-header">
-      <span class="modal-title">✂️ Login to Mehdis</span>
+      <span class="modal-title">Login to Mehdis</span>
       <button class="modal-close" onclick="closeLogin()">✕</button>
     </div>
     <div class="form-group">
@@ -305,7 +303,7 @@ function filterVideosByCategory(cat) {
     const isActive = (cat === '' && btn.textContent === 'All') || btn.textContent === cat;
     btn.style.border = isActive ? '2px solid #c0487a' : 'none';
     btn.style.color  = isActive ? '#c0487a' : '';
-    btn.style.background = isActive ? '#fdf0f5' : '';
+    btn.style.background = isActive ? '#e8f5f3' : '';
   });
   renderVideos(cat ? allVideos.filter(v => v.category === cat) : allVideos);
 }

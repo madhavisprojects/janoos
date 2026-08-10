@@ -117,7 +117,7 @@ const userSchema = new mongoose.Schema({
   gender: { type: String, enum: ["Men", "Women"], default: "Women" },
   password: { type: String, required: true },
   upiId: { type: String },
-  utr: { type: String, required: true },
+  utr: { type: String, default: '' },
   paymentStatus: { type: String, enum: ["pending", "verified", "rejected"], default: "pending" },
   profileImage: { type: String, default: "" },
   isActive: { type: Boolean, default: true },
@@ -347,15 +347,18 @@ async function sendOtp(mobile, otp) {
 app.post("/api/register", async (req, res) => {
   try {
     const { name, mobile, email, address, password, upiId, utr, gender } = req.body;
-    if (!name || !mobile || !password || !utr)
-      return res.status(400).json({ error: "Name, mobile, password and UTR are required" });
+    if (!name || !mobile || !password)
+      return res.status(400).json({ error: "Name, mobile and password are required" });
 
     const exists = await User.findOne({ mobile });
     if (exists) return res.status(400).json({ error: "Mobile number already registered" });
 
     const hashed = await bcrypt.hash(password, 10);
     const userId = "JAN" + Date.now();
-    const user = await User.create({ userId, name, mobile, email, address, password: hashed, upiId, utr, gender: gender || "Women" });
+    const user = await User.create({
+      userId, name, mobile, email, address, password: hashed, upiId, utr, gender: gender || "Women",
+      paymentStatus: 'verified', // registration is free — no payment step to verify
+    });
 
     const token = jwt.sign({ userId: user.userId, mobile: user.mobile }, JWT_SECRET, { expiresIn: "7d" });
     res.json({ success: true, token, user: { userId: user.userId, name: user.name, mobile: user.mobile, paymentStatus: user.paymentStatus } });
