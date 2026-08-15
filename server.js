@@ -343,12 +343,24 @@ async function sendOtp(mobile, otp) {
 // USER ROUTES
 // ═══════════════════════════════════════════════════════════════════════════════
 
+// Public — registration form needs this before a JWT exists to show the QR/UPI box
+app.get("/api/registration-info", async (req, res) => {
+  res.json({
+    success: true,
+    amount: Number(process.env.REGISTRATION_FEE) || 3000,
+    upi: {
+      id: process.env.PLATFORM_UPI_ID || '9989336847@ybl',
+      payeeName: process.env.PLATFORM_UPI_NAME || 'Janoos',
+    }
+  });
+});
+
 // Register
 app.post("/api/register", async (req, res) => {
   try {
     const { name, mobile, email, address, password, upiId, utr, gender } = req.body;
-    if (!name || !mobile || !password)
-      return res.status(400).json({ error: "Name, mobile and password are required" });
+    if (!name || !mobile || !password || !utr)
+      return res.status(400).json({ error: "Name, mobile, password and payment UTR are required" });
 
     const exists = await User.findOne({ mobile });
     if (exists) return res.status(400).json({ error: "Mobile number already registered" });
@@ -357,11 +369,10 @@ app.post("/api/register", async (req, res) => {
     const userId = "JAN" + Date.now();
     const user = await User.create({
       userId, name, mobile, email, address, password: hashed, upiId, utr, gender: gender || "Women",
-      paymentStatus: 'verified', // registration is free — no payment step to verify
+      paymentStatus: 'pending', // ₹3000 one-time registration fee — admin verifies UTR before login is allowed
     });
 
-    const token = jwt.sign({ userId: user.userId, mobile: user.mobile }, JWT_SECRET, { expiresIn: "7d" });
-    res.json({ success: true, token, user: { userId: user.userId, name: user.name, mobile: user.mobile, paymentStatus: user.paymentStatus } });
+    res.json({ success: true, user: { userId: user.userId, name: user.name, mobile: user.mobile, paymentStatus: user.paymentStatus } });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

@@ -25,7 +25,7 @@
 
     <div class="register-header">
       <h1>Join Mehdis</h1>
-      <p>Create your account to start placing custom stitch orders</p>
+      <p>₹3000 one-time registration fee — create your account to start placing custom stitch orders</p>
     </div>
 
     <!-- Step Indicator -->
@@ -80,6 +80,17 @@
             <input type="password" id="confirmPassword" placeholder="Repeat password" />
           </div>
         </div>
+        <div class="card" style="background:var(--bg);border:1px dashed var(--primary);margin:16px 0;padding:16px;text-align:center;">
+          <p style="font-weight:800;color:var(--primary-dark);margin-bottom:4px;">💳 One-time Registration Fee</p>
+          <p style="font-size:1.4rem;font-weight:900;color:var(--primary);margin-bottom:8px;" id="regFeeAmount">₹3000</p>
+          <p style="font-size:.85rem;color:var(--muted);margin-bottom:10px;">Scan QR · Pay via UPI</p>
+          <img id="regFeeQr" src="" alt="Payment QR" style="width:180px;height:180px;border-radius:10px;border:2px solid var(--border);"/>
+          <p style="text-align:center;font-weight:700;color:var(--primary-dark);margin:10px 0;" id="regFeeUpiId"></p>
+          <div class="form-group" style="text-align:left">
+            <label>UPI Transaction ID (UTR) *</label>
+            <input type="text" id="reg_utr" placeholder="e.g. 123456789012" />
+          </div>
+        </div>
         <div style="display:flex;gap:12px;margin-top:8px;">
           <button class="btn btn-primary" style="flex:1;" onclick="doRegister()" id="regBtn">Create Account 🎉</button>
         </div>
@@ -90,13 +101,13 @@
     <div id="step3" style="display:none;">
       <div class="card" style="max-width:480px;margin:0 auto;text-align:center;">
         <div style="font-size:4rem;margin-bottom:16px;">🎉</div>
-        <h2 style="color:var(--primary);font-size:1.6rem;font-weight:900;margin-bottom:8px;">Welcome to Mehdis!</h2>
-        <p style="color:var(--muted);margin-bottom:20px;">Your account has been created and is ready to use. Start placing custom stitch orders right away!</p>
+        <h2 style="color:var(--primary);font-size:1.6rem;font-weight:900;margin-bottom:8px;">Registration submitted!</h2>
+        <p style="color:var(--muted);margin-bottom:20px;">Your ₹3000 payment will be verified by our team within 1 hour. You can then log in with your mobile number and password.</p>
         <div class="card" style="background:var(--bg);border:1px dashed var(--primary);margin-bottom:20px;padding:16px;">
           <p style="font-size:0.9rem;color:var(--muted);">Your User ID</p>
           <p style="font-size:1.1rem;font-weight:800;color:var(--primary);" id="newUserId">—</p>
         </div>
-        <a href="/dashboard" class="btn btn-primary btn-full">Go to Dashboard →</a>
+        <a href="/" class="btn btn-primary btn-full">Go to Login →</a>
       </div>
     </div>
 
@@ -106,6 +117,22 @@
 <div class="toast" id="toast"></div>
 
 <script>
+let regFeeInfo = null;
+async function loadRegFeeInfo() {
+  try {
+    const res = await fetch('/api/registration-info');
+    regFeeInfo = await res.json();
+  } catch { regFeeInfo = null; }
+  const amount = regFeeInfo?.amount || 3000;
+  const upiId = regFeeInfo?.upi?.id || '9989336847@ybl';
+  const payeeName = encodeURIComponent(regFeeInfo?.upi?.payeeName || 'Mehdis');
+  document.getElementById('regFeeAmount').textContent = `₹${amount.toLocaleString('en-IN')}`;
+  document.getElementById('regFeeUpiId').textContent = upiId;
+  const qrData = `upi://pay?pa=${upiId}&pn=${payeeName}&am=${amount}&cu=INR`;
+  document.getElementById('regFeeQr').src = `https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(qrData)}`;
+}
+loadRegFeeInfo();
+
 function showToast(msg, type = '') {
   const t = document.getElementById('toast');
   t.textContent = msg;
@@ -134,8 +161,9 @@ async function doRegister() {
   const address = document.getElementById('address').value.trim();
   const password = document.getElementById('password').value;
   const confirmPassword = document.getElementById('confirmPassword').value;
+  const utr = document.getElementById('reg_utr').value.trim();
 
-  if (!name || !mobile || !password) return showToast('Name, mobile, and password are required', 'error');
+  if (!name || !mobile || !password || !utr) return showToast('Name, mobile, password, and payment UTR are required', 'error');
   if (mobile.length !== 10) return showToast('Enter a valid 10-digit mobile number', 'error');
   if (password.length < 6) return showToast('Password must be at least 6 characters', 'error');
   if (password !== confirmPassword) return showToast('Passwords do not match', 'error');
@@ -152,7 +180,7 @@ async function doRegister() {
       res = await fetch('/api/register', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, mobile, email, address, gender, password }),
+        body: JSON.stringify({ name, mobile, email, address, gender, password, utr }),
         signal: controller.signal,
       });
     } finally {
@@ -162,8 +190,6 @@ async function doRegister() {
     const data = await res.json();
     if (!res.ok) return showToast(data.error || 'Registration failed', 'error');
 
-    localStorage.setItem('janoos_token', data.token);
-    localStorage.setItem('janoos_user', JSON.stringify(data.user));
     document.getElementById('newUserId').textContent = data.user.userId;
     setStep(3);
     window.scrollTo({ top: 0, behavior: 'smooth' });
