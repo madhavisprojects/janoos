@@ -315,7 +315,7 @@ const { requireActiveSubscription, deactivateOverdue } = mountSubscriptionKit(ap
   authAdmin,
   upi: async () => ({
     id: await getSetting("subscriptionUpiId", process.env.PLATFORM_UPI_ID || "9989336847@ybl"),
-    payeeName: await getSetting("subscriptionPayeeName", process.env.PLATFORM_UPI_NAME || "Mehdis"),
+    payeeName: 'PinkisAppStudio',
     qrCode: await getSetting("subscriptionQrCode", "")
   }),
   graceDays: 3
@@ -350,7 +350,7 @@ app.get("/api/registration-info", async (req, res) => {
     amount: Number(process.env.REGISTRATION_FEE) || 3000,
     upi: {
       id: process.env.PLATFORM_UPI_ID || '9989336847@ybl',
-      payeeName: process.env.PLATFORM_UPI_NAME || 'Janoos',
+      payeeName: 'PinkisAppStudio',
     }
   });
 });
