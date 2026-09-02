@@ -400,6 +400,59 @@ function selectStyleFromVideo() {
 
 loadVideos();
 if ('serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js').catch(()=>{});
+
+// ── Anonymous visitor tracking (admin "who's visiting" table) ──
+function getVisitorId() {
+  let id = localStorage.getItem('janoos_visitor_id');
+  if (!id) {
+    id = 'v_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 10);
+    localStorage.setItem('janoos_visitor_id', id);
+  }
+  return id;
+}
+function recordVisitorLocation(geoStatus, coords) {
+  fetch('/api/visitor-location', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      visitorId: getVisitorId(), geoStatus,
+      lat: coords?.latitude, lng: coords?.longitude, accuracy: coords?.accuracy
+    })
+  }).catch(() => {});
+}
+function captureVisitorLocation() {
+  if (!navigator.geolocation) { recordVisitorLocation('unknown'); return; }
+  navigator.geolocation.getCurrentPosition(
+    pos => recordVisitorLocation('granted', pos.coords),
+    err => recordVisitorLocation(err.code === err.PERMISSION_DENIED ? 'denied' : 'unknown'),
+    { timeout: 10000 }
+  );
+}
+captureVisitorLocation();
+
+// ── Behavioral signal: did a real interaction happen, how long did they stay ──
+// IP flags only catch bots too lazy to hide their datacenter/proxy IP; this
+// catches scripted browsers running on an otherwise-clean residential IP.
+let janoos_hadInteraction = false;
+const janoos_loadTime = Date.now();
+['mousemove', 'scroll', 'keydown', 'touchstart', 'click'].forEach(evt => {
+  window.addEventListener(evt, () => { janoos_hadInteraction = true; }, { once: true, passive: true });
+});
+function sendVisitorBehavior() {
+  const payload = JSON.stringify({
+    visitorId: getVisitorId(),
+    hadInteraction: janoos_hadInteraction,
+    dwellMs: Date.now() - janoos_loadTime
+  });
+  if (navigator.sendBeacon) {
+    navigator.sendBeacon('/api/visitor-behavior', new Blob([payload], { type: 'application/json' }));
+  } else {
+    fetch('/api/visitor-behavior', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: payload, keepalive: true }).catch(() => {});
+  }
+}
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'hidden') sendVisitorBehavior();
+});
 </script>
 </body>
 </html>

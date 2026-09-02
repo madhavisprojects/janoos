@@ -70,6 +70,15 @@ const otpLimiter = rateLimit({
   legacyHeaders: false,
   message: { error: "Too many attempts. Please try again later." },
 });
+// Anonymous visitor beacon fires once (plus one behavioral follow-up) per
+// page load — rate-limit by IP
+const visitLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 300,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: "Too many requests. Please try again later." },
+});
 
 // ─── MongoDB ───────────────────────────────────────────────────────────────────
 mongoose
@@ -248,6 +257,37 @@ const shopVideoSchema = new mongoose.Schema({
   updatedAt: { type: Date, default: Date.now },
 });
 
+// Who's-visiting-Janoos admin table — one row per visitorId (a random ID kept
+// in the browser's localStorage, no login required), upserted on every page
+// load. IP + ISP + city-level location work with no browser consent; lat/lng
+// only fill in if the visitor grants GPS permission, and "denied" is
+// recorded too. Flags proxy/hosting/mobile IPs so the admin can spot bots at
+// a glance, plus a behavioral signal (did any interaction happen, how long
+// did the tab stay open) since a clean IP only rules out lazy bots — it says
+// nothing about a scripted browser on an otherwise-clean residential IP.
+// Mirrors the ProTalk / UrShop / ILoveU / pinkis-studio visitor-tracking pattern.
+const visitorSchema = new mongoose.Schema({
+  visitorId:   { type: String, required: true, unique: true },
+  geoStatus:   { type: String, enum: ["granted", "denied", "unknown"], default: "unknown" },
+  latitude:    Number,
+  longitude:   Number,
+  accuracy:    Number,
+  userAgent:   String,
+  ipAddress:   String,
+  ipCity:      String,
+  ipRegion:    String,
+  ipCountry:   String,
+  ipIsp:       String,
+  ipProxy:     Boolean, // known VPN/proxy exit node (ip-api.com)
+  ipHosting:   Boolean, // datacenter/cloud IP — most bots & crawlers run from these
+  ipMobile:    Boolean, // carrier/mobile network IP
+  hadInteraction: Boolean, // any mouse/scroll/key/touch event fired this visit
+  dwellMs:        Number,  // ms page stayed open before hidden/closed
+  visitCount:  { type: Number, default: 1 },
+  createdAt: { type: Date, default: Date.now },
+  updatedAt: { type: Date, default: Date.now },
+});
+
 const Settings   = mongoose.model("JanoosSettings",  settingsSchema);
 const User       = mongoose.model("JanoosUser",      userSchema);
 const Order      = mongoose.model("JanoosOrder",     orderSchema);
@@ -255,6 +295,7 @@ const Admin      = mongoose.model("JanoosAdmin",     adminSchema);
 const Video      = mongoose.model("JanoosVideo",     videoSchema);
 const ShopVideo  = mongoose.model("JanoosShopVideo", shopVideoSchema);
 const Designer   = mongoose.model("JanoosDesigner",  designerSchema);
+const Visitor    = mongoose.model("JanoosVisitor",   visitorSchema);
 
 // ─── Seed super admin ──────────────────────────────────────────────────────────
 async function seedAdmin() {
@@ -1080,6 +1121,97 @@ app.delete("/api/admin/shop-videos/:id", authAdmin, async (req, res) => {
     await ShopVideo.findByIdAndDelete(req.params.id);
     res.json({ success: true, message: "Deleted" });
   } catch (e) { res.status(500).json({ success: false, error: e.message }); }
+});
+
+// ─── Visitor tracking ────────────────────────────────────────────────────────
+// Free IP geolocation, no API key/consent needed. Skips loopback/private ranges.
+async function lookupIpLocation(ip) {
+  if (!ip || ip === "::1" || ip.startsWith("127.") || ip.startsWith("10.") || ip.startsWith("192.168.")) {
+    return null;
+  }
+  try {
+    const r = await axios.get(`http://ip-api.com/json/${ip}`, {
+      params: { fields: "status,city,regionName,country,isp,proxy,hosting,mobile" },
+      timeout: 4000,
+    });
+    const data = r.data;
+    if (data.status !== "success") return null;
+    return {
+      ipCity: data.city, ipRegion: data.regionName, ipCountry: data.country, ipIsp: data.isp,
+      ipProxy: data.proxy, ipHosting: data.hosting, ipMobile: data.mobile,
+    };
+  } catch (err) {
+    console.error("IP lookup failed:", err.message);
+    return null;
+  }
+}
+
+// Fires once per page load, before/regardless of login — records IP/ISP/city
+// (no consent needed) plus GPS status ("denied" recorded too, so the admin
+// sees who declined, not just who allowed). One row per visitorId, upserted,
+// so the admin table shows distinct visitors rather than a new row on every reload.
+app.post("/api/visitor-location", visitLimiter, async (req, res) => {
+  const { visitorId, geoStatus, lat, lng, accuracy } = req.body;
+  if (!visitorId) return res.status(400).json({ success: false, error: "visitorId is required" });
+
+  const forwardedFor = req.headers["x-forwarded-for"];
+  const ipAddress = forwardedFor ? forwardedFor.split(",")[0].trim() : req.ip;
+  const ipLocation = await lookupIpLocation(ipAddress);
+  const status = geoStatus === "granted" || geoStatus === "denied" ? geoStatus : "unknown";
+
+  await Visitor.findOneAndUpdate(
+    { visitorId: String(visitorId).slice(0, 64) },
+    {
+      $set: {
+        geoStatus: status,
+        latitude:  status === "granted" ? lat : undefined,
+        longitude: status === "granted" ? lng : undefined,
+        accuracy:  status === "granted" ? accuracy : undefined,
+        userAgent: req.headers["user-agent"],
+        ipAddress,
+        ipCity: ipLocation?.ipCity, ipRegion: ipLocation?.ipRegion,
+        ipCountry: ipLocation?.ipCountry, ipIsp: ipLocation?.ipIsp,
+        ipProxy: ipLocation?.ipProxy, ipHosting: ipLocation?.ipHosting, ipMobile: ipLocation?.ipMobile,
+        updatedAt: new Date(),
+      },
+      $inc: { visitCount: 1 },
+      $setOnInsert: { createdAt: new Date() },
+    },
+    { upsert: true }
+  );
+  res.json({ success: true });
+});
+
+// Behavioral follow-up beacon — fires on tab hide/close via sendBeacon, once
+// the location beacon above has already created the visitor row. No IP
+// lookup here; just records whether the visit showed any human interaction
+// and how long the page stayed open. A clean IP (not hosting/proxy) only
+// means "not a lazy bot" — this catches scripted browsers on real IPs too.
+app.post("/api/visitor-behavior", visitLimiter, async (req, res) => {
+  const { visitorId, hadInteraction, dwellMs } = req.body;
+  if (!visitorId) return res.status(400).json({ success: false, error: "visitorId is required" });
+
+  await Visitor.findOneAndUpdate(
+    { visitorId: String(visitorId).slice(0, 64) },
+    { $set: {
+        hadInteraction: !!hadInteraction,
+        dwellMs: Number.isFinite(dwellMs) ? Math.max(0, Math.min(dwellMs, 24 * 60 * 60 * 1000)) : undefined,
+        updatedAt: new Date(),
+    } }
+  );
+  res.json({ success: true });
+});
+
+// Who's-visiting-Janoos admin table — IP/ISP/city + GPS status + behavioral
+// signal per distinct visitor, most recently active first.
+app.get("/api/admin/visitors", authAdmin, async (req, res) => {
+  const visitors = await Visitor.find().sort({ updatedAt: -1 }).limit(200).lean();
+  res.json({ success: true, visitors });
+});
+
+app.delete("/api/admin/visitors/:id", authAdmin, async (req, res) => {
+  await Visitor.findByIdAndDelete(req.params.id);
+  res.json({ success: true, message: "Deleted" });
 });
 
 // ─── Serve pages ───────────────────────────────────────────────────────────────

@@ -64,6 +64,9 @@
       <a href="#" onclick="showSection('shopvideos')" data-sec="shopvideos">
         <span class="nav-icon">🛍️</span> Shop Videos
       </a>
+      <a href="#" onclick="showSection('visitors')" data-sec="visitors">
+        <span class="nav-icon">🧭</span> Visitors
+      </a>
       <a href="#" onclick="showSection('settings')" data-sec="settings">
         <span class="nav-icon">⚙️</span> Settings
       </a>
@@ -343,6 +346,24 @@
             <tbody id="svTableBody"></tbody>
           </table>
           <p id="svEmpty" style="text-align:center;color:#aaa;padding:30px;display:none;">No shop videos added yet.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── Visitors ── -->
+    <div id="sec-visitors" style="display:none;">
+      <div class="admin-topbar">
+        <h1>🧭 Visitors</h1>
+        <button class="btn btn-primary btn-sm" onclick="loadVisitors()">↺ Refresh</button>
+      </div>
+      <p style="color:#888;font-size:.8rem;margin:-4px 0 12px;">Everyone who opened Janoos — IP, ISP and city work without any permission; precise pin only if they allow location.</p>
+      <div class="card">
+        <div id="visitorsTableWrap" class="table-wrap">
+          <table class="admin-table">
+            <thead><tr><th>Last Seen</th><th>Visits</th><th>Approx. Location</th><th>ISP</th><th>IP</th><th>GPS</th><th>Activity</th><th>Type</th><th>Actions</th></tr></thead>
+            <tbody id="visitorsTableBody"></tbody>
+          </table>
+          <p id="visitorsEmpty" style="text-align:center;color:#aaa;padding:30px;display:none;">No visitors yet.</p>
         </div>
       </div>
     </div>
@@ -630,7 +651,7 @@ async function adminLogout() {
 
 // ── Navigation ─────────────────────────────────────────────────────────────────
 function showSection(sec) {
-  ['dashboard','users','videos','shopvideos','settings','designers','subscriptions','sales','admins'].forEach(s => {
+  ['dashboard','users','videos','shopvideos','settings','designers','subscriptions','sales','admins','visitors'].forEach(s => {
     document.getElementById('sec-'+s).style.display = s===sec ? 'block' : 'none';
   });
   if (sec === 'shopvideos') loadShopVideos();
@@ -644,6 +665,7 @@ function showSection(sec) {
   if (sec==='subscriptions') loadSubscriptionPayments();
   if (sec==='sales')         loadSalesStats();
   if (sec==='admins')        loadAdmins();
+  if (sec==='visitors')      loadVisitors();
 }
 
 // ── Sales ──────────────────────────────────────────────────────────────────────
@@ -1435,6 +1457,48 @@ async function deleteSv(id, title) {
   await fetch(`/api/admin/shop-videos/${id}`, { method: 'DELETE', credentials: 'include' });
   showToast('Shop video deleted', 'success');
   loadShopVideos();
+}
+
+// ── Visitors ─────────────────────────────────────────────────────────────────
+async function loadVisitors() {
+  const r = await fetch('/api/admin/visitors');
+  if (r.status === 401) { adminLogout(); return; }
+  const data = await r.json();
+  if (!data.success) return;
+  const visitors = data.visitors;
+  const tbody = document.getElementById('visitorsTableBody');
+  document.getElementById('visitorsEmpty').style.display = visitors.length ? 'none' : '';
+  tbody.innerHTML = visitors.map(v => {
+    const loc = v.ipCity ? [v.ipCity, v.ipRegion].filter(Boolean).join(', ') : '-';
+    const gps = v.geoStatus === 'granted'
+      ? `<a href="https://www.google.com/maps?q=${v.latitude},${v.longitude}" target="_blank" rel="noopener">📍 View</a>`
+      : v.geoStatus === 'denied' ? 'Denied' : '—';
+    const activity = v.hadInteraction === undefined ? '—'
+      : v.hadInteraction ? `👆 ${Math.round((v.dwellMs || 0) / 1000)}s`
+      : `<span style="color:#c62828">No interaction${v.dwellMs != null ? ' (' + Math.round(v.dwellMs / 1000) + 's)' : ''}</span>`;
+    const type = v.ipHosting ? '<span class="badge badge-pending">🤖 Likely bot</span>'
+      : v.ipProxy ? '<span class="badge badge-pending">🕵️ Proxy/VPN</span>'
+      : v.hadInteraction === false ? '<span class="badge badge-pending">⚠️ No interaction</span>'
+      : '<span class="badge badge-verified">👤 Real</span>';
+    return `<tr>
+      <td>${new Date(v.updatedAt).toLocaleString('en-IN')}</td>
+      <td>${v.visitCount}</td>
+      <td>${loc}</td>
+      <td>${v.ipIsp || '-'}</td>
+      <td>${v.ipAddress || '-'}</td>
+      <td>${gps}</td>
+      <td>${activity}</td>
+      <td>${type}</td>
+      <td><button class="btn btn-sm btn-danger" onclick="deleteVisitor('${v._id}')">Delete</button></td>
+    </tr>`;
+  }).join('');
+}
+
+async function deleteVisitor(id) {
+  if (!confirm('Delete this visitor record?')) return;
+  await fetch(`/api/admin/visitors/${id}`, { method: 'DELETE' });
+  showToast('Visitor deleted', 'success');
+  loadVisitors();
 }
 
 // ── Payment verification ──────────────────────────────────────────────────────
